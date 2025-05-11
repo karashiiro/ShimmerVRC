@@ -17,6 +17,7 @@ struct HeartBeatView: View {
             .font(.system(size: 100))
             .foregroundColor(.red)
             .scaleEffect(scale)
+            .accessibilityIdentifier("ecg_heartbeat")
             .onAppear {
                 startHeartbeat()
             }

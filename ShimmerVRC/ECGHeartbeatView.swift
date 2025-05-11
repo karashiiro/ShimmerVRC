@@ -22,6 +22,7 @@ struct ECGHeartbeatView: View {
                 .stroke(Color.red, lineWidth: 2)
                 .frame(height: 80)
                 .clipped() // Keep waveform within bounds
+                .accessibilityIdentifier("ecg_waveform")
         }
         .onAppear {
             animateWaveform()

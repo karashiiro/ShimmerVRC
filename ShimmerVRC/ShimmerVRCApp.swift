@@ -11,7 +11,12 @@ import SwiftUI
 struct ShimmerVRCApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            // Show test harness only when running ECG tests
+            if CommandLine.arguments.contains("test-ecg-view") {
+                ECGTestHarness()
+            } else {
+                ContentView()
+            }
         }
     }
 }
