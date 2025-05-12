@@ -9,6 +9,8 @@ import SwiftUI
 
 @main
 struct ShimmerVRCApp: App {
+    @StateObject private var connectivityManager = ConnectivityManager.shared
+
     var body: some Scene {
         WindowGroup {
             // Launch different views based on launch arguments
@@ -19,12 +21,11 @@ struct ShimmerVRCApp: App {
                 MainView()
                     .onAppear {
                         // Force ConnectivityManager to deterministic behavior for testing
-                        let manager = ConnectivityManager.shared
-                        manager.simulationDelay = 0.5
-                        manager.simulationSuccessRate = 1.0
+                        connectivityManager.simulationDelay = 0.5
+                        connectivityManager.simulationSuccessRate = 1.0
                         
                         // Set a default host for testing
-                        manager.targetHost = "test.local"
+                        connectivityManager.targetHost = "test.local"
                     }
             } else {
                 MainView()

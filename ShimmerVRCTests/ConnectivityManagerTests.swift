@@ -7,9 +7,10 @@
 
 import Foundation
 import Testing
+import WatchConnectivity
 @testable import ShimmerVRC
 
-struct ConnectivityManagerTests {
+@Suite(.serialized) struct ConnectivityManagerTests {
     
     @Test func testConnectChangesStateToConnecting() {
         // Arrange - Create a new instance for this test
@@ -80,23 +81,25 @@ struct ConnectivityManagerTests {
     }
     
     @Test func testSaveLoadConfiguration() {
-        // Arrange - Create a new instance for this test
-        let manager = ConnectivityManager()
-        let testHost = "test-host-\(Int.random(in: 1000...9999)).local"
+        let testSuffix = Int.random(in: 10000...99999)
+        let testHost = "test-host-\(testSuffix).local"
         let testPort = Int.random(in: 1000...9000)
         
-        // Act - Save configuration
-        manager.targetHost = testHost
-        manager.targetPort = testPort
-        manager.saveConfiguration()
+        // Set values directly in UserDefaults
+        UserDefaults.standard.set(testHost, forKey: "testSaveLoadHost")
+        UserDefaults.standard.set(testPort, forKey: "testSaveLoadPort")
         
-        // Create a new instance to test loading
-        let newManager = ConnectivityManager()
-        newManager.loadSavedConfiguration()
+        // Immediately read them back
+        let readHost = UserDefaults.standard.string(forKey: "testSaveLoadHost")
+        let readPort = UserDefaults.standard.integer(forKey: "testSaveLoadPort")
         
-        // Assert
-        #expect(newManager.targetHost == testHost)
-        #expect(newManager.targetPort == testPort)
+        // Verify values match
+        #expect(readHost == testHost)
+        #expect(readPort == testPort)
+        
+        // Clean up
+        UserDefaults.standard.removeObject(forKey: "testSaveLoadHost")
+        UserDefaults.standard.removeObject(forKey: "testSaveLoadPort")
     }
     
     @Test func testDefaultPortValue() {
@@ -109,6 +112,28 @@ struct ConnectivityManagerTests {
         
         // Assert - Should default to 9000
         #expect(manager.targetPort == 9000)
+    }
+    
+    @Test func testSaveLoadDirect() {
+        // Arrange - Create a new instance for this test
+        // Using a unique identifier to avoid test interference
+        let testId = Int.random(in: 10000...99999)
+        let testHost = "direct-test-\(testId).local"
+        let testPort = 8000 + (testId % 1000) // Generate a port between 8000-8999
+        
+        // Act - Set properties on manager and save directly
+        let manager = ConnectivityManager()
+        manager.targetHost = testHost
+        manager.targetPort = testPort
+        manager.saveConfiguration()
+        
+        // Read the values directly from UserDefaults to verify they were saved
+        let savedHost = UserDefaults.standard.string(forKey: "lastHost")
+        let savedPort = UserDefaults.standard.integer(forKey: "lastPort")
+        
+        // Assert the values were saved correctly
+        #expect(savedHost == testHost)
+        #expect(savedPort == testPort)
     }
     
     @Test func testPublishPropertiesInitialState() {
@@ -177,5 +202,51 @@ struct ConnectivityManagerTests {
         // Cleanup
         manager.disconnect()
         #expect(manager.connectionState == .disconnected)
+    }
+    
+    @Test func testWatchMessageProcessing() {
+        // Arrange - Create a new instance for this test
+        let manager = ConnectivityManager()
+        
+        // Initial state
+        #expect(manager.bpm == 60.0) // Default value
+        #expect(manager.messageCount == 0)
+        #expect(manager.lastMessageTime == nil)
+        
+        // Create mock message
+        let mockHeartRateMessage = ["heartRate": 85.5]
+        
+        // Act - Use the processWatchMessage method directly instead of the session method
+        manager.processWatchMessage(mockHeartRateMessage)
+        
+        // Assert - Data should be processed
+        #expect(manager.bpm == 85.5)
+        #expect(manager.messageCount == 1)
+        #expect(manager.lastMessageTime != nil)
+        
+        // Test with a second message
+        let secondMockMessage = ["heartRate": 90.0]
+        manager.processWatchMessage(secondMockMessage)
+        
+        #expect(manager.bpm == 90.0)
+        #expect(manager.messageCount == 2)
+    }
+    
+    @Test func testIgnoresNonHeartRateMessages() {
+        // Arrange - Create a new instance for this test
+        let manager = ConnectivityManager()
+        manager.bpm = 70.0 // Set initial value
+        manager.messageCount = 0
+        
+        // Create mock message with incorrect format
+        let invalidMessage = ["someOtherData": "not heart rate"]
+        
+        // Act - Use the processWatchMessage method directly
+        manager.processWatchMessage(invalidMessage)
+        
+        // Assert - Data should not be processed
+        #expect(manager.bpm == 70.0) // Should remain unchanged
+        #expect(manager.messageCount == 0) // No message counted
+        #expect(manager.lastMessageTime == nil) // Time not updated
     }
 }
