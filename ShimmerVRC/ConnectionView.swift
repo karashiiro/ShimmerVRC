@@ -6,20 +6,20 @@
 //
 
 import SwiftUI
+import Combine
 
 struct ConnectionView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var connectivityManager = ConnectivityManager.shared
+    @StateObject private var hostDiscovery = HostDiscovery()
     @State private var host = ""
     @State private var port = "9000"
-    @State private var discoveredHosts: [String] = []
-    @State private var isSearching = true
     
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Discovered Devices").accessibility(identifier: "discovered_devices_header")) {
-                    if isSearching && discoveredHosts.isEmpty {
+                    if hostDiscovery.isSearching && hostDiscovery.hosts.isEmpty {
                         HStack {
                             Text("Searching for devices...")
                                 .accessibility(identifier: "searching_text")
@@ -27,12 +27,12 @@ struct ConnectionView: View {
                             ProgressView()
                         }
                         .accessibility(identifier: "searching_devices_row")
-                    } else if discoveredHosts.isEmpty {
+                    } else if hostDiscovery.hosts.isEmpty {
                         Text("No devices found")
                             .foregroundColor(.secondary)
                             .accessibility(identifier: "no_devices_text")
                     } else {
-                        ForEach(discoveredHosts, id: \.self) { h in
+                        ForEach(hostDiscovery.hosts, id: \.self) { h in
                             HStack {
                                 Text(h)
                                     .accessibility(identifier: "device_\(h.replacingOccurrences(of: ".", with: "_"))")
@@ -46,6 +46,11 @@ struct ConnectionView: View {
                             .accessibility(identifier: "device_row_\(h.replacingOccurrences(of: ".", with: "_"))")
                         }
                     }
+                    
+                    Button(action: { hostDiscovery.startBrowsing() }) {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                    .accessibility(identifier: "refresh_button")
                 }
                 
                 Section(header: Text("Connection Settings").accessibility(identifier: "connection_settings_header")) {
@@ -121,11 +126,16 @@ struct ConnectionView: View {
             .navigationTitle("Connect to VRChat")
             .accessibility(identifier: "connect_form")
             .onAppear {
-                startDiscovery()
+                // Start device discovery
+                hostDiscovery.startBrowsing()
                 
                 // Initialize with saved values
                 host = connectivityManager.targetHost
                 port = String(connectivityManager.targetPort)
+            }
+            .onDisappear {
+                // Clean up discovery when view disappears
+                hostDiscovery.stopBrowsing()
             }
         }
         .accessibility(identifier: "connect_view")
@@ -150,22 +160,7 @@ struct ConnectionView: View {
         }
     }
     
-    // Mock device discovery
-    private func startDiscovery() {
-        // This would be replaced with real mDNS discovery
-        isSearching = true
-        
-        // Simulate network discovery delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            // Populate with mock data for UI development
-            discoveredHosts = [
-                "vrc-pc.local",
-                "quest-desktop.local",
-                "macbook-pro.local"
-            ]
-            isSearching = false
-        }
-    }
+
 }
 
 struct ConnectionView_Previews: PreviewProvider {

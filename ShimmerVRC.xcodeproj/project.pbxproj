@@ -34,9 +34,22 @@
 		F3876E1A2DD12C81009D8464 /* ShimmerVRCUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShimmerVRCUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F3876E6D2DD1A1EA009D8464 /* Exceptions for "ShimmerVRC" folder in "ShimmerVRC" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F3876E022DD12C7F009D8464 /* ShimmerVRC */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F3876E052DD12C7F009D8464 /* ShimmerVRC */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F3876E6D2DD1A1EA009D8464 /* Exceptions for "ShimmerVRC" folder in "ShimmerVRC" target */,
+			);
 			path = ShimmerVRC;
 			sourceTree = "<group>";
 		};
@@ -409,6 +422,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShimmerVRC/Info.plist;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Allow streaming heart rate to VRChat.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -436,6 +451,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShimmerVRC/Info.plist;
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Allow streaming heart rate to VRChat.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -9,9 +9,19 @@ import Foundation
 import SwiftUI
 import Combine
 import WatchConnectivity
+import OSCKit
 
 /// State management for connections
 class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
+    // Singleton instance
+    // Background task identifier for keeping app alive
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+    
+    // Timer for periodic connectivity checking
+    private var connectionMonitorTimer: Timer?
+    
+    // OSC client for sending heart rate data
+    private var oscClient: OSCClientProtocol
     static let shared = ConnectivityManager()
     
     // Connection state
@@ -40,7 +50,8 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         case error
     }
     
-    override init() {
+    init(oscClient: OSCClientProtocol = OSCClient()) {
+        self.oscClient = oscClient
         super.init()
         
         // Set up and activate WatchConnectivity session
@@ -103,6 +114,11 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
                 self.messageCount += 1
                 self.lastMessageTime = Date()
                 print("Test mode: Processed heart rate: \(heartRate) BPM")
+                
+                // Forward to OSC if connected (test mode)
+                if self.oscConnected {
+                    try? self.oscClient.sendHeartRate(heartRate, to: targetHost, port: UInt16(targetPort))
+                }
             } else {
                 // Normal app operation - use async dispatch
                 DispatchQueue.main.async { [weak self] in
@@ -111,6 +127,11 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
                     self.messageCount += 1
                     self.lastMessageTime = Date()
                     print("Received heart rate from Watch: \(heartRate) BPM")
+                    
+                    // Forward to OSC if connected
+                    if self.oscConnected {
+                        self.forwardHeartRateToOSC(heartRate)
+                    }
                 }
             }
         }
@@ -154,36 +175,99 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         targetPort = port
         saveConfiguration()
         
-        // Simulate connection
-        // This will be replaced with actual OSC client setup in Phase 2.3
-        simulateConnection()
+        // Test connection by sending a ping
+        do {
+            try oscClient.sendPing(to: host, port: UInt16(port))
+            
+            // If we get here, the message was sent successfully
+            // Note: This doesn't guarantee the target received it, just that it was sent
+            oscConnected = true
+            connectionState = .connected
+            
+            // Start background tasks to keep app alive
+            registerBackgroundTask()
+            
+            // Start connectivity monitoring
+            startConnectionMonitoring()
+        } catch {
+            oscConnected = false
+            lastError = "Connection failed: \(error.localizedDescription)"
+            connectionState = .error
+        }
     }
     
     /// Disconnects from the current OSC target
     func disconnect() {
         oscConnected = false
         connectionState = .disconnected
+        
+        // Stop monitoring
+        connectionMonitorTimer?.invalidate()
+        connectionMonitorTimer = nil
+        
+        // End background task
+        endBackgroundTask()
     }
     
-    // MARK: - Methods for Simulation
+    // MARK: - OSC Methods
     
-    func simulateConnection() {
-        // This simulates the connection process for UI development
-        // Will be replaced with real implementation
+    /// Forwards heart rate data via OSC
+    /// - Parameter heartRate: The heart rate value to send
+    func forwardHeartRateToOSC(_ heartRate: Double) {
+        guard oscConnected && connectionState == .connected else { return }
         
-        // Simulate connection delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + simulationDelay) { [weak self] in
-            guard let self = self else { return }
+        do {
+            try oscClient.sendHeartRate(heartRate, to: targetHost, port: UInt16(targetPort))
+        } catch {
+            print("Failed to send heart rate: \(error.localizedDescription)")
+            lastError = "Failed to send heart rate: \(error.localizedDescription)"
+            connectionState = .error
+            oscConnected = false
             
-            // Determine success based on configured success rate
-            let success = Double.random(in: 0...1) < self.simulationSuccessRate
+            // Stop monitoring since we're in an error state
+            connectionMonitorTimer?.invalidate()
+        }
+    }
+    
+    /// Registers a background task to keep the app running
+    private func registerBackgroundTask() {
+        endBackgroundTask() // End any existing task first
+        
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+            self?.endBackgroundTask()
+        }
+    }
+    
+    /// Ends the current background task
+    private func endBackgroundTask() {
+        if backgroundTask != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTask)
+            backgroundTask = .invalid
+        }
+    }
+    
+    /// Starts a timer to periodically check connection health
+    private func startConnectionMonitoring() {
+        connectionMonitorTimer?.invalidate()
+        
+        connectionMonitorTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+            guard let self = self, self.connectionState == .connected else { return }
             
-            if success {
-                self.oscConnected = true
-                self.connectionState = .connected
-            } else {
-                self.lastError = "Failed to connect to host"
+            // Check if we've received a message recently (only if watch is connected)
+            if self.watchConnected, let lastTime = self.lastMessageTime, Date().timeIntervalSince(lastTime) > 30.0 {
+                self.lastError = "No data received from watch in 30 seconds"
+                // Don't change connection state as OSC might still be valid
+            }
+            
+            // Send keep-alive ping
+            do {
+                try self.oscClient.sendPing(to: self.targetHost, port: UInt16(self.targetPort))
+            } catch {
+                self.lastError = "Connection lost: \(error.localizedDescription)"
                 self.connectionState = .error
+                self.oscConnected = false
+                self.connectionMonitorTimer?.invalidate()
+                self.connectionMonitorTimer = nil
             }
         }
     }
