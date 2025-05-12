@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F3876E572DD19DC5009D8464 /* OSCKit in Frameworks */ = {isa = PBXBuildFile; productRef = F3876E562DD19DC5009D8464 /* OSCKit */; };
+		F3876E592DD19DC5009D8464 /* OSCKitCore in Frameworks */ = {isa = PBXBuildFile; productRef = F3876E582DD19DC5009D8464 /* OSCKitCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		F3876E112DD12C81009D8464 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F3876E592DD19DC5009D8464 /* OSCKitCore in Frameworks */,
+				F3876E572DD19DC5009D8464 /* OSCKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +119,8 @@
 			);
 			name = ShimmerVRC;
 			packageProductDependencies = (
+				F3876E562DD19DC5009D8464 /* OSCKit */,
+				F3876E582DD19DC5009D8464 /* OSCKitCore */,
 			);
 			productName = ShimmerVRC;
 			productReference = F3876E032DD12C7F009D8464 /* ShimmerVRC.app */;
@@ -195,6 +204,9 @@
 			);
 			mainGroup = F3876DFA2DD12C7F009D8464;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F3876E552DD19DC5009D8464 /* XCRemoteSwiftPackageReference "OSCKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F3876E042DD12C7F009D8464 /* Products */;
 			projectDirPath = "";
@@ -550,6 +562,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F3876E552DD19DC5009D8464 /* XCRemoteSwiftPackageReference "OSCKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/orchetect/OSCKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F3876E562DD19DC5009D8464 /* OSCKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F3876E552DD19DC5009D8464 /* XCRemoteSwiftPackageReference "OSCKit" */;
+			productName = OSCKit;
+		};
+		F3876E582DD19DC5009D8464 /* OSCKitCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F3876E552DD19DC5009D8464 /* XCRemoteSwiftPackageReference "OSCKit" */;
+			productName = OSCKitCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F3876DFB2DD12C7F009D8464 /* Project object */;
 }
