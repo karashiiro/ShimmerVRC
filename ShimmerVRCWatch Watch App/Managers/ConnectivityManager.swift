@@ -7,6 +7,7 @@
 
 import Foundation
 import WatchConnectivity
+import Combine
 
 // Protocol for easier unit testing
 protocol WatchConnectivityProtocol {
@@ -22,9 +23,17 @@ class ConnectivityManager: NSObject, ObservableObject {
     static let shared = ConnectivityManager()
     
     private let session: WatchConnectivityProtocol
+    private var cancellables = Set<AnyCancellable>()
     
+    // Published properties for UI binding and monitoring
     @Published var isConnected = false
     @Published var lastError: String?
+    @Published var messagesSent: Int = 0
+    @Published var lastSentTimestamp: Date?
+    
+    // Debug properties (can be removed in production)
+    @Published var reachabilityHistory: [Bool] = []
+    @Published var sendAttempts: Int = 0
     
     init(session: WatchConnectivityProtocol = WCSession.default) {
         self.session = session
@@ -43,19 +52,86 @@ class ConnectivityManager: NSObject, ObservableObject {
         }
         
         session.activate()
+        
+        // Start periodic reachability check
+        startReachabilityMonitoring()
     }
     
+    /// Sends heart rate data to the paired iPhone
+    /// - Parameter heartRate: The heart rate value in beats per minute
     func sendHeartRate(_ heartRate: Double) {
+        // Always track attempts for analytics
+        sendAttempts += 1
+        
+        // If unreachable, queue message or log the failure
         guard session.isReachable else {
-            lastError = "iPhone is not reachable"
+            // Update history for debugging
+            updateReachabilityHistory(false)
+            if sendAttempts % 10 == 0 { // Only log every 10th attempt to reduce noise
+                lastError = "iPhone is not reachable"
+            }
             return
         }
         
+        // Update history for debugging
+        updateReachabilityHistory(true)
+        
+        // Send the heart rate to iPhone
         let message = ["heartRate": heartRate]
-        session.sendMessage(message, replyHandler: nil) { error in
+        session.sendMessage(message, replyHandler: { [weak self] _ in
+            // Optional: Handle successful message delivery
             DispatchQueue.main.async {
-                self.lastError = "Error sending heart rate: \(error.localizedDescription)"
+                self?.messagesSent += 1
+                self?.lastSentTimestamp = Date()
+                self?.lastError = nil // Clear any previous errors
             }
+        }) { [weak self] error in
+            DispatchQueue.main.async {
+                self?.lastError = "Error sending heart rate: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    /// Updates the reachability history array for debugging purposes
+    private func updateReachabilityHistory(_ isReachable: Bool) {
+        // Add new value to history
+        var newHistory = self.reachabilityHistory
+        newHistory.append(isReachable)
+        
+        // Keep only last 20 values
+        if newHistory.count > 20 {
+            newHistory.removeFirst(newHistory.count - 20)
+        }
+        
+        self.reachabilityHistory = newHistory
+    }
+    
+    /// Starts a timer to periodically check the reachability of the iPhone
+    private func startReachabilityMonitoring() {
+        // Check reachability every 3 seconds
+        Timer.publish(every: 3.0, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                guard let self = self, let wcSession = self.session as? WCSession else { return }
+                
+                let isReachable = wcSession.isReachable
+                self.isConnected = isReachable
+                
+                // Update reachability history
+                self.updateReachabilityHistory(isReachable)
+            }
+            .store(in: &cancellables)
+    }
+    
+    /// Simulation function for testing
+    func simulateSendHeartRate(_ heartRate: Double) {
+        // For testing without actual WCSession
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            self.messagesSent += 1
+            self.lastSentTimestamp = Date()
+            print("Simulated sending heart rate: \(heartRate) BPM")
+        } else {
+            sendHeartRate(heartRate)
         }
     }
 }
@@ -63,9 +139,24 @@ class ConnectivityManager: NSObject, ObservableObject {
 extension ConnectivityManager: WCSessionDelegate {
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         DispatchQueue.main.async {
-            self.isConnected = activationState == .activated
+            self.isConnected = activationState == .activated && session.isReachable
             if let error = error {
                 self.lastError = "Activation error: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    // Called when reachability changes
+    func sessionReachabilityDidChange(_ session: WCSession) {
+        DispatchQueue.main.async {
+            self.isConnected = session.isReachable
+            self.updateReachabilityHistory(session.isReachable)
+            
+            if session.isReachable {
+                // Clear error when connection established
+                if self.lastError == "iPhone is not reachable" {
+                    self.lastError = nil
+                }
             }
         }
     }
@@ -73,6 +164,12 @@ extension ConnectivityManager: WCSessionDelegate {
     // Required for WCSessionDelegate conformance on watchOS
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         // Handle any messages from the iPhone app if needed
-        print("Received message from iPhone: \(message)")
+        // For example, configuration updates or commands
+        DispatchQueue.main.async {
+            if let command = message["command"] as? String {
+                print("Received command from iPhone: \(command)")
+                // Handle different commands as needed
+            }
+        }
     }
 }
