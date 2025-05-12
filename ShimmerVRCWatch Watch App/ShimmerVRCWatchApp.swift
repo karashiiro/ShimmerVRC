@@ -9,13 +9,15 @@ import SwiftUI
 
 @main
 struct ShimmerVRCWatch_Watch_AppApp: App {
-    // Initialize the connectivity manager
+    // Initialize managers
     @StateObject private var connectivityManager = ConnectivityManager.shared
+    @StateObject private var workoutManager = WorkoutManager.shared
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(connectivityManager)
+                .environmentObject(workoutManager)
         }
     }
 }
