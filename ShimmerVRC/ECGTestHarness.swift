@@ -33,7 +33,15 @@ struct ECGTestHarness: View {
                         
                         Button("Set BPM") {
                             if let bpm = Double(bpmInput) {
-                                testBPM = bpm
+                                if bpm > 300 {
+                                    testBPM = 300
+                                }
+                                else if bpm < 0 {
+                                    testBPM = 0
+                                }
+                                else {
+                                    testBPM = bpm
+                                }
                             }
                         }
                         .buttonStyle(.borderedProminent)

@@ -10,7 +10,7 @@ class ECGHeartbeatViewUITests: XCTestCase {
         app = XCUIApplication()
         
         // Configure app to launch directly to ECGHeartbeatView test harness
-        app.launchArguments = ["test-ecg-view"]
+        app.launchArguments = ["--test-ecg"]
         app.launch()
     }
     
