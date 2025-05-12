@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		F3876E572DD19DC5009D8464 /* OSCKit in Frameworks */ = {isa = PBXBuildFile; productRef = F3876E562DD19DC5009D8464 /* OSCKit */; };
 		F3876E592DD19DC5009D8464 /* OSCKitCore in Frameworks */ = {isa = PBXBuildFile; productRef = F3876E582DD19DC5009D8464 /* OSCKitCore */; };
+		F3876E962DD1B375009D8464 /* ShimmerVRCWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F3876E762DD1B373009D8464 /* ShimmerVRCWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,12 +27,50 @@
 			remoteGlobalIDString = F3876E022DD12C7F009D8464;
 			remoteInfo = ShimmerVRC;
 		};
+		F3876E832DD1B375009D8464 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F3876DFB2DD12C7F009D8464 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F3876E752DD1B373009D8464;
+			remoteInfo = "ShimmerVRCWatch Watch App";
+		};
+		F3876E8D2DD1B375009D8464 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F3876DFB2DD12C7F009D8464 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F3876E752DD1B373009D8464;
+			remoteInfo = "ShimmerVRCWatch Watch App";
+		};
+		F3876E942DD1B375009D8464 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F3876DFB2DD12C7F009D8464 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F3876E752DD1B373009D8464;
+			remoteInfo = "ShimmerVRCWatch Watch App";
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F3876E9A2DD1B375009D8464 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				F3876E962DD1B375009D8464 /* ShimmerVRCWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F3876E032DD12C7F009D8464 /* ShimmerVRC.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShimmerVRC.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3876E102DD12C81009D8464 /* ShimmerVRCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShimmerVRCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3876E1A2DD12C81009D8464 /* ShimmerVRCUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShimmerVRCUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3876E762DD1B373009D8464 /* ShimmerVRCWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ShimmerVRCWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3876E822DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ShimmerVRCWatch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3876E8C2DD1B375009D8464 /* ShimmerVRCWatch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ShimmerVRCWatch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -63,6 +102,21 @@
 			path = ShimmerVRCUITests;
 			sourceTree = "<group>";
 		};
+		F3876E772DD1B373009D8464 /* ShimmerVRCWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "ShimmerVRCWatch Watch App";
+			sourceTree = "<group>";
+		};
+		F3876E852DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "ShimmerVRCWatch Watch AppTests";
+			sourceTree = "<group>";
+		};
+		F3876E8F2DD1B375009D8464 /* ShimmerVRCWatch Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "ShimmerVRCWatch Watch AppUITests";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +143,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F3876E732DD1B373009D8464 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3876E7F2DD1B375009D8464 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3876E892DD1B375009D8464 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -98,6 +173,9 @@
 				F3876E052DD12C7F009D8464 /* ShimmerVRC */,
 				F3876E132DD12C81009D8464 /* ShimmerVRCTests */,
 				F3876E1D2DD12C81009D8464 /* ShimmerVRCUITests */,
+				F3876E772DD1B373009D8464 /* ShimmerVRCWatch Watch App */,
+				F3876E852DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests */,
+				F3876E8F2DD1B375009D8464 /* ShimmerVRCWatch Watch AppUITests */,
 				F3876E042DD12C7F009D8464 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -108,6 +186,9 @@
 				F3876E032DD12C7F009D8464 /* ShimmerVRC.app */,
 				F3876E102DD12C81009D8464 /* ShimmerVRCTests.xctest */,
 				F3876E1A2DD12C81009D8464 /* ShimmerVRCUITests.xctest */,
+				F3876E762DD1B373009D8464 /* ShimmerVRCWatch Watch App.app */,
+				F3876E822DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests.xctest */,
+				F3876E8C2DD1B375009D8464 /* ShimmerVRCWatch Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -122,10 +203,12 @@
 				F3876DFF2DD12C7F009D8464 /* Sources */,
 				F3876E002DD12C7F009D8464 /* Frameworks */,
 				F3876E012DD12C7F009D8464 /* Resources */,
+				F3876E9A2DD1B375009D8464 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F3876E952DD1B375009D8464 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				F3876E052DD12C7F009D8464 /* ShimmerVRC */,
@@ -185,6 +268,74 @@
 			productReference = F3876E1A2DD12C81009D8464 /* ShimmerVRCUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		F3876E752DD1B373009D8464 /* ShimmerVRCWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F3876E972DD1B375009D8464 /* Build configuration list for PBXNativeTarget "ShimmerVRCWatch Watch App" */;
+			buildPhases = (
+				F3876E722DD1B373009D8464 /* Sources */,
+				F3876E732DD1B373009D8464 /* Frameworks */,
+				F3876E742DD1B373009D8464 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F3876E772DD1B373009D8464 /* ShimmerVRCWatch Watch App */,
+			);
+			name = "ShimmerVRCWatch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "ShimmerVRCWatch Watch App";
+			productReference = F3876E762DD1B373009D8464 /* ShimmerVRCWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F3876E812DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F3876E9B2DD1B375009D8464 /* Build configuration list for PBXNativeTarget "ShimmerVRCWatch Watch AppTests" */;
+			buildPhases = (
+				F3876E7E2DD1B375009D8464 /* Sources */,
+				F3876E7F2DD1B375009D8464 /* Frameworks */,
+				F3876E802DD1B375009D8464 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F3876E842DD1B375009D8464 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F3876E852DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests */,
+			);
+			name = "ShimmerVRCWatch Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "ShimmerVRCWatch Watch AppTests";
+			productReference = F3876E822DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		F3876E8B2DD1B375009D8464 /* ShimmerVRCWatch Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F3876E9E2DD1B375009D8464 /* Build configuration list for PBXNativeTarget "ShimmerVRCWatch Watch AppUITests" */;
+			buildPhases = (
+				F3876E882DD1B375009D8464 /* Sources */,
+				F3876E892DD1B375009D8464 /* Frameworks */,
+				F3876E8A2DD1B375009D8464 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F3876E8E2DD1B375009D8464 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F3876E8F2DD1B375009D8464 /* ShimmerVRCWatch Watch AppUITests */,
+			);
+			name = "ShimmerVRCWatch Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "ShimmerVRCWatch Watch AppUITests";
+			productReference = F3876E8C2DD1B375009D8464 /* ShimmerVRCWatch Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -205,6 +356,17 @@
 					F3876E192DD12C81009D8464 = {
 						CreatedOnToolsVersion = 16.3;
 						TestTargetID = F3876E022DD12C7F009D8464;
+					};
+					F3876E752DD1B373009D8464 = {
+						CreatedOnToolsVersion = 16.3;
+					};
+					F3876E812DD1B375009D8464 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = F3876E752DD1B373009D8464;
+					};
+					F3876E8B2DD1B375009D8464 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = F3876E752DD1B373009D8464;
 					};
 				};
 			};
@@ -228,6 +390,9 @@
 				F3876E022DD12C7F009D8464 /* ShimmerVRC */,
 				F3876E0F2DD12C81009D8464 /* ShimmerVRCTests */,
 				F3876E192DD12C81009D8464 /* ShimmerVRCUITests */,
+				F3876E752DD1B373009D8464 /* ShimmerVRCWatch Watch App */,
+				F3876E812DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests */,
+				F3876E8B2DD1B375009D8464 /* ShimmerVRCWatch Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -248,6 +413,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		F3876E182DD12C81009D8464 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3876E742DD1B373009D8464 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3876E802DD1B375009D8464 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3876E8A2DD1B375009D8464 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -278,6 +464,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F3876E722DD1B373009D8464 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3876E7E2DD1B375009D8464 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3876E882DD1B375009D8464 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -290,6 +497,21 @@
 			isa = PBXTargetDependency;
 			target = F3876E022DD12C7F009D8464 /* ShimmerVRC */;
 			targetProxy = F3876E1B2DD12C81009D8464 /* PBXContainerItemProxy */;
+		};
+		F3876E842DD1B375009D8464 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F3876E752DD1B373009D8464 /* ShimmerVRCWatch Watch App */;
+			targetProxy = F3876E832DD1B375009D8464 /* PBXContainerItemProxy */;
+		};
+		F3876E8E2DD1B375009D8464 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F3876E752DD1B373009D8464 /* ShimmerVRCWatch Watch App */;
+			targetProxy = F3876E8D2DD1B375009D8464 /* PBXContainerItemProxy */;
+		};
+		F3876E952DD1B375009D8464 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F3876E752DD1B373009D8464 /* ShimmerVRCWatch Watch App */;
+			targetProxy = F3876E942DD1B375009D8464 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -539,6 +761,140 @@
 			};
 			name = Release;
 		};
+		F3876E982DD1B375009D8464 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ShimmerVRCWatch;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow sharing workout and heart rate data.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow saving workouts and heart data.";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = moe.karashiiro.ShimmerVRC;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = moe.karashiiro.ShimmerVRC.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Debug;
+		};
+		F3876E992DD1B375009D8464 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = ShimmerVRCWatch;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow sharing workout and heart rate data.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow saving workouts and heart data.";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = moe.karashiiro.ShimmerVRC;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = moe.karashiiro.ShimmerVRC.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Release;
+		};
+		F3876E9C2DD1B375009D8464 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "moe.karashiiro.ShimmerVRCWatch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShimmerVRCWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ShimmerVRCWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Debug;
+		};
+		F3876E9D2DD1B375009D8464 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "moe.karashiiro.ShimmerVRCWatch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ShimmerVRCWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ShimmerVRCWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Release;
+		};
+		F3876E9F2DD1B375009D8464 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "moe.karashiiro.ShimmerVRCWatch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "ShimmerVRCWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Debug;
+		};
+		F3876EA02DD1B375009D8464 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "moe.karashiiro.ShimmerVRCWatch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "ShimmerVRCWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.4;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -574,6 +930,33 @@
 			buildConfigurations = (
 				F3876E2B2DD12C81009D8464 /* Debug */,
 				F3876E2C2DD12C81009D8464 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F3876E972DD1B375009D8464 /* Build configuration list for PBXNativeTarget "ShimmerVRCWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F3876E982DD1B375009D8464 /* Debug */,
+				F3876E992DD1B375009D8464 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F3876E9B2DD1B375009D8464 /* Build configuration list for PBXNativeTarget "ShimmerVRCWatch Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F3876E9C2DD1B375009D8464 /* Debug */,
+				F3876E9D2DD1B375009D8464 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F3876E9E2DD1B375009D8464 /* Build configuration list for PBXNativeTarget "ShimmerVRCWatch Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F3876E9F2DD1B375009D8464 /* Debug */,
+				F3876EA02DD1B375009D8464 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
