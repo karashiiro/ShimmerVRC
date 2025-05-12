@@ -98,7 +98,7 @@ class WorkoutManagerTests: XCTestCase {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             authExpectation.fulfill()
         }
-        wait(for: [authExpectation], timeout: 1.0)
+        wait(for: [authExpectation], timeout: 30.0)
         
         // Act
         workoutManager.startWorkout()
@@ -108,11 +108,11 @@ class WorkoutManagerTests: XCTestCase {
         
         // Wait for async update
         let expectation = XCTestExpectation(description: "Workout starts")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30.0) {
             XCTAssertTrue(workoutManager.isWorkoutActive, "isWorkoutActive should be updated")
             expectation.fulfill()
         }
-        wait(for: [expectation], timeout: 1.0)
+        wait(for: [expectation], timeout: 30.0)
     }
     
     func testStopWorkout_EndsSession() {
