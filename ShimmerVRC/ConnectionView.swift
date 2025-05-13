@@ -54,10 +54,12 @@ struct ConnectionView: View {
                 }
                 
                 Section(header: Text("Connection Settings").accessibility(identifier: "connection_settings_header")) {
+                    HStack {}
                     TextField("Host", text: $host)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                         .keyboardType(.URL)
+                        .accessibilityIdentifier("host_field")
                         .accessibility(identifier: "host_field")
                     
                     TextField("Port", text: $port)
@@ -109,7 +111,7 @@ struct ConnectionView: View {
                             connectivityManager.connect(to: host, port: portValue)
                         }
                         .accessibilityLabel("Connect to VRChat")
-                        .accessibilityIdentifier("connection_view_connect_button")
+                        .accessibilityIdentifier("connect_button_sheet")
                         .disabled(host.isEmpty || connectivityManager.connectionState == .connecting)
                     }
                     

@@ -10,6 +10,7 @@ import SwiftUI
 import Combine
 import WatchConnectivity
 import OSCKit
+import Network
 
 /// State management for connections
 class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
@@ -19,6 +20,15 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     
     // Timer for periodic connectivity checking
     private var connectionMonitorTimer: Timer?
+    
+    // Reconnection properties
+    private var reconnectTimer: Timer?
+    private var reconnectAttempts: Int = 0
+    private let maxReconnectAttempts = 5
+    
+    // Network path monitor
+    private var pathMonitor: NWPathMonitor?
+    private var isNetworkAvailable = true
     
     // OSC client for sending heart rate data
     private var oscClient: OSCClientProtocol
@@ -30,6 +40,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var oscConnected = false
     @Published var watchWorkoutActive = false
     @Published var lastError: String?
+    @Published var currentError: HeartRateConnectionError?
     
     // Heart rate data
     @Published var bpm: Double? = nil  // nil means no heart rate data available
@@ -60,6 +71,76 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         
         // Load saved configuration if any
         loadSavedConfiguration()
+        
+        // Start network monitoring
+        setupNetworkMonitoring()
+    }
+    
+    // MARK: - Network Monitoring
+    
+    /// Set up network path monitoring
+    private func setupNetworkMonitoring() {
+        pathMonitor = NWPathMonitor()
+        pathMonitor?.pathUpdateHandler = { [weak self] path in
+            guard let self = self else { return }
+            
+            let newNetworkStatus = path.status == .satisfied
+            let networkStatusChanged = newNetworkStatus != self.isNetworkAvailable
+            self.isNetworkAvailable = newNetworkStatus
+            
+            DispatchQueue.main.async {
+                if networkStatusChanged {
+                    if !self.isNetworkAvailable {
+                        // Network was lost
+                        self.handleNetworkLost()
+                    } else {
+                        // Network is back
+                        self.handleNetworkRestored()
+                    }
+                }
+            }
+        }
+        
+        // Start monitoring on a background queue
+        let monitorQueue = DispatchQueue(label: "com.shimmerVRC.networkMonitor")
+        pathMonitor?.start(queue: monitorQueue)
+    }
+    
+    private func handleNetworkLost() {
+        // Only update state if we were successfully connected
+        if self.connectionState == .connected || self.connectionState == .connecting {
+            self.currentError = .networkUnavailable
+            self.lastError = self.currentError?.localizedDescription
+            self.connectionState = .error
+            self.notifyConnectionError()
+            
+            // Cancel any reconnection attempts
+            self.reconnectTimer?.invalidate()
+            self.reconnectTimer = nil
+        }
+    }
+    
+    private func handleNetworkRestored() {
+        // If we were in an error state due to network and we have connection settings,
+        // attempt to reconnect
+        if self.connectionState == .error && self.currentError == .networkUnavailable {
+            // Reset error state
+            self.currentError = nil
+            self.lastError = nil
+            
+            // Attempt reconnection if we have previous connection settings
+            if !self.targetHost.isEmpty && self.targetPort > 0 && self.targetPort <= 65535 {
+                self.reconnectAttempts = 0 // Reset attempts counter
+                self.connect(to: self.targetHost, port: self.targetPort)
+            }
+        }
+    }
+    
+    deinit {
+        // Clean up the path monitor
+        pathMonitor?.cancel()
+        reconnectTimer?.invalidate()
+        connectionMonitorTimer?.invalidate()
     }
     
     // MARK: - WatchConnectivity Setup
@@ -202,7 +283,8 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     /// Starts the workout on the Apple Watch
     func startWorkout() {
         guard WCSession.default.isReachable else {
-            lastError = "Apple Watch is not reachable"
+            currentError = .watchUnreachable
+            lastError = currentError?.localizedDescription
             return
         }
         
@@ -211,6 +293,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             print("Watch responded to start workout: \(response)")
         }, errorHandler: { error in
             DispatchQueue.main.async { [weak self] in
+                self?.currentError = .oscSendFailure(message: error.localizedDescription) 
                 self?.lastError = "Failed to start workout: \(error.localizedDescription)"
             }
         })
@@ -219,7 +302,8 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     /// Stops the workout on the Apple Watch
     func stopWorkout() {
         guard WCSession.default.isReachable else {
-            lastError = "Apple Watch is not reachable"
+            currentError = .watchUnreachable
+            lastError = currentError?.localizedDescription
             return
         }
         
@@ -228,6 +312,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             print("Watch responded to stop workout: \(response)")
         }, errorHandler: { error in
             DispatchQueue.main.async { [weak self] in
+                self?.currentError = .oscSendFailure(message: error.localizedDescription) 
                 self?.lastError = "Failed to stop workout: \(error.localizedDescription)"
             }
         })
@@ -242,9 +327,19 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         lastError = nil
         
         // Validate inputs
-        guard !host.isEmpty, port > 0 && port <= 65535 else {
-            lastError = "Invalid host or port"
+        guard !host.isEmpty else {
+        currentError = .hostUnreachable(host: "Empty hostname")
+        lastError = currentError?.localizedDescription
+        connectionState = .error
+            notifyConnectionError()
+            return
+        }
+        
+        guard port > 0 && port <= 65535 else {
+            currentError = .portInvalid(port: port)
+            lastError = currentError?.localizedDescription
             connectionState = .error
+            notifyConnectionError()
             return
         }
         
@@ -253,24 +348,59 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         targetPort = port
         saveConfiguration()
         
+        // Create a timeout for the connection attempt
+        let connectionTimeout = DispatchWorkItem { [weak self] in
+            guard let self = self, self.connectionState == .connecting else { return }
+            
+            self.currentError = .connectionTimeout
+            self.lastError = self.currentError?.localizedDescription
+            self.connectionState = .error
+            self.oscConnected = false
+            self.notifyConnectionError()
+            
+            // Schedule reconnection attempt
+            self.scheduleReconnect(host: host, port: port)
+        }
+        
+        // Schedule timeout (5 seconds)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0, execute: connectionTimeout)
+        
         // Test connection by sending a ping
         do {
             try oscClient.sendPing(to: host, port: UInt16(port))
+            
+            // Cancel the timeout since we succeeded
+            connectionTimeout.cancel()
             
             // If we get here, the message was sent successfully
             // Note: This doesn't guarantee the target received it, just that it was sent
             oscConnected = true
             connectionState = .connected
+            currentError = nil
+            lastError = nil
+            reconnectAttempts = 0 // Reset reconnection attempts on success
             
             // Start background tasks to keep app alive
             registerBackgroundTask()
             
             // Start connectivity monitoring
             startConnectionMonitoring()
+            
+            // Notify connection success
+            notifyConnectionSuccess()
+            
         } catch {
+            // Cancel the timeout since we already failed
+            connectionTimeout.cancel()
+            
             oscConnected = false
-            lastError = "Connection failed: \(error.localizedDescription)"
+            currentError = .oscSendFailure(message: error.localizedDescription)
+            lastError = currentError?.localizedDescription
             connectionState = .error
+            notifyConnectionError()
+            
+            // Schedule reconnection attempt
+            scheduleReconnect(host: host, port: port)
         }
     }
     
@@ -278,13 +408,23 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     func disconnect() {
         oscConnected = false
         connectionState = .disconnected
+        currentError = nil
+        lastError = nil
         
         // Stop monitoring
         connectionMonitorTimer?.invalidate()
         connectionMonitorTimer = nil
         
+        // Cancel any reconnection attempts
+        reconnectTimer?.invalidate()
+        reconnectTimer = nil
+        reconnectAttempts = 0
+        
         // End background task
         endBackgroundTask()
+        
+        // Notify disconnection
+        notifyDisconnection()
     }
     
     // MARK: - OSC Methods
@@ -298,12 +438,19 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             try oscClient.sendHeartRate(heartRate, to: targetHost, port: UInt16(targetPort))
         } catch {
             print("Failed to send heart rate: \(error.localizedDescription)")
-            lastError = "Failed to send heart rate: \(error.localizedDescription)"
+            currentError = .oscSendFailure(message: error.localizedDescription)
+            lastError = currentError?.localizedDescription
             connectionState = .error
             oscConnected = false
+            notifyConnectionError()
             
             // Stop monitoring since we're in an error state
             connectionMonitorTimer?.invalidate()
+            
+            // Attempt reconnection if network is available
+            if isNetworkAvailable && !targetHost.isEmpty {
+                scheduleReconnect(host: targetHost, port: targetPort)
+            }
         }
     }
     
@@ -333,7 +480,8 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             
             // Check if we've received a message recently (only if watch is connected)
             if self.watchConnected, let lastTime = self.lastMessageTime, Date().timeIntervalSince(lastTime) > 30.0 {
-                self.lastError = "No data received from watch in 30 seconds"
+                self.currentError = .watchConnectionLost
+                self.lastError = self.currentError?.localizedDescription
                 // Don't change connection state as OSC might still be valid
             }
             
@@ -341,13 +489,100 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             do {
                 try self.oscClient.sendPing(to: self.targetHost, port: UInt16(self.targetPort))
             } catch {
-                self.lastError = "Connection lost: \(error.localizedDescription)"
+                self.currentError = .oscSendFailure(message: error.localizedDescription)
+                self.lastError = self.currentError?.localizedDescription
                 self.connectionState = .error
                 self.oscConnected = false
+                self.notifyConnectionError()
                 self.connectionMonitorTimer?.invalidate()
                 self.connectionMonitorTimer = nil
+                
+                // Attempt reconnection if network is available
+                if self.isNetworkAvailable && !self.targetHost.isEmpty {
+                    self.scheduleReconnect(host: self.targetHost, port: self.targetPort)
+                }
             }
         }
+    }
+    
+    /// Schedules a reconnection attempt with exponential backoff
+    private func scheduleReconnect(host: String, port: Int) {
+        guard reconnectAttempts < maxReconnectAttempts else {
+            // Max attempts reached - notify and reset
+            reconnectAttempts = 0
+            currentError = .maxRetriesExceeded
+            lastError = currentError?.localizedDescription
+            connectionState = .disconnected
+            notifyConnectionError()
+            return
+        }
+        
+        // Cancel any existing reconnect timer
+        reconnectTimer?.invalidate()
+        
+        // Calculate delay with exponential backoff: 1s, 2s, 4s, 8s, 16s
+        let backoffInterval = pow(2.0, Double(reconnectAttempts))
+        let maxInterval = 30.0 // Cap at 30 seconds
+        let delay = min(backoffInterval, maxInterval)
+        
+        connectionState = .connecting
+        
+        // Schedule the reconnection attempt
+        reconnectTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            
+            self.reconnectAttempts += 1
+            self.notifyReconnecting(attempt: self.reconnectAttempts, maxAttempts: self.maxReconnectAttempts)
+            self.connect(to: host, port: port)
+        }
+    }
+    
+    // MARK: - Notification Methods
+    
+    /// Notifies UI of a successful connection
+    private func notifyConnectionSuccess() {
+        NotificationCenter.default.post(
+            name: .heartRateConnected,
+            object: nil,
+            userInfo: [
+                "host": targetHost,
+                "port": targetPort
+            ]
+        )
+    }
+    
+    /// Notifies UI of a connection error
+    private func notifyConnectionError() {
+        NotificationCenter.default.post(
+            name: .heartRateConnectionError,
+            object: nil,
+            userInfo: [
+                "error": lastError ?? "Unknown error",
+                "errorType": String(describing: currentError)
+            ]
+        )
+    }
+    
+    /// Notifies UI of a reconnection attempt
+    private func notifyReconnecting(attempt: Int, maxAttempts: Int) {
+        NotificationCenter.default.post(
+            name: .heartRateReconnecting,
+            object: nil,
+            userInfo: [
+                "attempt": attempt,
+                "maxAttempts": maxAttempts,
+                "host": targetHost,
+                "port": targetPort
+            ]
+        )
+    }
+    
+    /// Notifies UI of a disconnection
+    private func notifyDisconnection() {
+        NotificationCenter.default.post(
+            name: .heartRateDisconnected,
+            object: nil
+        )
     }
     
     // MARK: - Configuration Methods
