@@ -32,7 +32,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var lastError: String?
     
     // Heart rate data
-    @Published var bpm: Double = 60.0
+    @Published var bpm: Double? = nil  // nil means no heart rate data available
     @Published var lastMessageTime: Date?
     @Published var messageCount: Int = 0
     
@@ -83,13 +83,24 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             switch activationState {
             case .activated:
                 print("WCSession activated successfully")
+                let wasConnected = self.watchConnected
                 self.watchConnected = session.isReachable
+                
+                // If watch became unreachable, reset heart rate data
+                if wasConnected && !self.watchConnected {
+                    self.bpm = nil
+                    self.watchWorkoutActive = false
+                }
             case .inactive, .notActivated:
                 print("WCSession not activated: \(error?.localizedDescription ?? "Unknown error")")
                 self.watchConnected = false
+                self.bpm = nil
+                self.watchWorkoutActive = false
             @unknown default:
                 print("WCSession unknown state")
                 self.watchConnected = false
+                self.bpm = nil
+                self.watchWorkoutActive = false
             }
         }
     }
@@ -97,7 +108,16 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     /// Called when the reachability of the counterpart app changes
     func sessionReachabilityDidChange(_ session: WCSession) {
         DispatchQueue.main.async { [weak self] in
-            self?.watchConnected = session.isReachable
+            guard let self = self else { return }
+            
+            let wasConnected = self.watchConnected
+            self.watchConnected = session.isReachable
+            
+            // If watch became unreachable, reset heart rate data
+            if wasConnected && !self.watchConnected {
+                self.bpm = nil
+                self.watchWorkoutActive = false
+            }
         }
     }
     
@@ -145,7 +165,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
                     print("Received heart rate from Watch: \(heartRate) BPM")
                     
                     // Forward to OSC if connected
-                    if self.oscConnected {
+                    if self.oscConnected && self.connectionState == .connected {
                         self.forwardHeartRateToOSC(heartRate)
                     }
                 }
@@ -156,7 +176,10 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     /// Required for iOS - Called when the session becomes inactive
     func sessionDidBecomeInactive(_ session: WCSession) {
         DispatchQueue.main.async { [weak self] in
-            self?.watchConnected = false
+            guard let self = self else { return }
+            self.watchConnected = false
+            self.bpm = nil
+            self.watchWorkoutActive = false
         }
     }
     
@@ -164,7 +187,10 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     func sessionDidDeactivate(_ session: WCSession) {
         // Reactivate for next connection
         DispatchQueue.main.async { [weak self] in
-            self?.watchConnected = false
+            guard let self = self else { return }
+            self.watchConnected = false
+            self.bpm = nil
+            self.watchWorkoutActive = false
             
             // Reactivate the session (required for iOS when switching to a new watch)
             WCSession.default.activate()

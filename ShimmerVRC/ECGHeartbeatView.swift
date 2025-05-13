@@ -8,9 +8,12 @@
 import SwiftUI
 
 struct ECGHeartbeatView: View {
-    @Binding var bpm: Double
+    @Binding var bpm: Double?
     @State private var phase: CGFloat = 0
     @State private var timer: Timer?
+    
+    // Default animation speed when no heart rate is available
+    private let defaultBpm: Double = 60.0
     
     var body: some View {
         VStack(spacing: 30) {
@@ -19,7 +22,7 @@ struct ECGHeartbeatView: View {
             
             // ECG Waveform
             ECGWaveform(phase: phase)
-                .stroke(Color.red, lineWidth: 2)
+                .stroke(bpm != nil ? Color.red : Color.gray.opacity(0.5), lineWidth: 2)
                 .frame(height: 80)
                 .clipped() // Keep waveform within bounds
                 .accessibilityIdentifier("ecg_waveform")
@@ -38,9 +41,10 @@ struct ECGHeartbeatView: View {
         
         // Create timer for continuous animation
         timer = Timer.scheduledTimer(withTimeInterval: 1/60, repeats: true) { _ in
-            // Calculate animation speed based on BPM
+            // Calculate animation speed based on BPM or use default
             // Higher BPM = faster waveform scrolling
-            let speed = 0.02 * (bpm / 60.0)
+            let activeBpm = bpm ?? defaultBpm
+            let speed = 0.02 * (activeBpm / 60.0)
             
             // Update phase to make waveform scroll
             withAnimation(.linear(duration: 1/60)) {

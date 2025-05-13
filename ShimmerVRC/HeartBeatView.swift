@@ -8,20 +8,23 @@
 import SwiftUI
 
 struct HeartBeatView: View {
-    @Binding var bpm: Double
+    @Binding var bpm: Double?
     @State private var scale: CGFloat = 1.0
     @State private var timer: Timer?
+    
+    // Default animation when no heart rate is available
+    private let defaultBpm: Double = 60.0
     
     var body: some View {
         Image(systemName: "heart.fill")
             .font(.system(size: 100))
-            .foregroundColor(.red)
+            .foregroundColor(bpm != nil ? .red : .gray.opacity(0.5))
             .scaleEffect(scale)
             .accessibilityIdentifier("ecg_heartbeat")
             .onAppear {
                 startHeartbeat()
             }
-            .onChange(of: bpm) {
+            .onChange(of: bpm) { _ in
                 restartHeartbeat()
             }
             .onDisappear {
@@ -41,8 +44,9 @@ struct HeartBeatView: View {
         // Stop any existing timer
         timer?.invalidate()
         
-        // Calculate interval between beats
-        let interval = 60.0 / bpm
+        // Calculate interval between beats using actual BPM or default
+        let activeBpm = bpm ?? defaultBpm
+        let interval = 60.0 / activeBpm
         
         // Create new timer
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in

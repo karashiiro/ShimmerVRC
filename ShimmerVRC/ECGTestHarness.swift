@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ECGTestHarness: View {
-    @State private var testBPM: Double = 70
+    @State private var testBPM: Double? = 70
     @State private var bpmInput: String = "70"
     
     var body: some View {
@@ -48,7 +48,7 @@ struct ECGTestHarness: View {
                         .accessibilityIdentifier("set_bpm_button")
                     }
                     
-                    Text("Current BPM: \(Int(testBPM))")
+                    Text("Current BPM: \(Int(testBPM == nil ? 0 : testBPM!))")
                         .font(.headline)
                         .accessibilityIdentifier("current_bpm_display")
                 }

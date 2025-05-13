@@ -191,7 +191,7 @@ class ConnectivityManagerTestOSCClient: OSCClientProtocol {
         #expect(manager.connectionState == .disconnected)
         #expect(manager.watchConnected == false)
         #expect(manager.oscConnected == false)
-        #expect(manager.bpm == 60.0)
+        #expect(manager.bpm == nil)
         #expect(manager.messageCount == 0)
         #expect(manager.lastMessageTime == nil)
         #expect(manager.lastError == nil)
@@ -202,7 +202,7 @@ class ConnectivityManagerTestOSCClient: OSCClientProtocol {
         let manager = ConnectivityManager()
         
         // Initial state
-        #expect(manager.bpm == 60.0) // Default value
+        #expect(manager.bpm == nil) // Default value
         #expect(manager.messageCount == 0)
         #expect(manager.lastMessageTime == nil)
         

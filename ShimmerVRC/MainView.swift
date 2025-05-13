@@ -30,9 +30,9 @@ struct MainView: View {
                     .padding()
                 
                 // Heart rate display
-                Text("\(Int(connectivityManager.bpm)) BPM")
+                Text(connectivityManager.bpm != nil ? "\(Int(connectivityManager.bpm!)) BPM" : "-- BPM")
                     .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(.primary)
+                    .foregroundColor(connectivityManager.bpm != nil ? .primary : .secondary)
                     .accessibilityIdentifier("bpm_display")
                 
                 Spacer()
@@ -135,23 +135,36 @@ struct MainView: View {
     }
     
     private func toggleTestMode() {
-        // For testing: simulate heart rate changes
-        if connectivityManager.connectionState == .connected {
-            // Stop simulated data
-            connectivityManager.disconnect()
-        } else {
-            // Start simulated data
-            connectivityManager.watchConnected = true
-            
-            // Simulate changing heart rate
-            let timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
-                connectivityManager.bpm = Double.random(in: 60...120)
-                connectivityManager.lastMessageTime = Date()
-                connectivityManager.messageCount += 1
+        // For testing: enable/disable test mode
+        
+        // If we're in a unit/UI test, allow test mode
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            if connectivityManager.connectionState == .connected {
+                // Stop simulated data
+                connectivityManager.disconnect()
+            } else {
+                // Start simulated data for tests only
+                connectivityManager.watchConnected = true
+                
+                // Simulate changing heart rate
+                let timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+                    connectivityManager.bpm = Double.random(in: 60...120)
+                    connectivityManager.lastMessageTime = Date()
+                    connectivityManager.messageCount += 1
+                }
+                
+                // Keep reference to timer somewhere (not implemented here for simplicity)
+                _ = timer
             }
-            
-            // Keep reference to timer somewhere (not implemented here for simplicity)
-            _ = timer
+        } else {
+            // In the real app, we don't want mock data - toggle visual styles only
+            if connectivityManager.bpm != nil {
+                // Clear heart rate data
+                connectivityManager.bpm = nil
+            } else {
+                // Show a sample heart rate (but don't simulate continuous updates)
+                connectivityManager.bpm = 75.0
+            }
         }
     }
     
