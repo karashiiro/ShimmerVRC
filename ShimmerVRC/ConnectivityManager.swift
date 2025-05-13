@@ -28,6 +28,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var connectionState: ConnectionState = .disconnected
     @Published var watchConnected = false
     @Published var oscConnected = false
+    @Published var watchWorkoutActive = false
     @Published var lastError: String?
     
     // Heart rate data
@@ -105,8 +106,23 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         processWatchMessage(message)
     }
     
-    /// Processes a heart rate message - separate method to allow direct calls in tests
+    /// Processes a message from the Watch - separate method to allow direct calls in tests
     func processWatchMessage(_ message: [String : Any]) {
+        // Handle workout status updates
+        if let status = message["workoutStatus"] as? String {
+            DispatchQueue.main.async { [weak self] in
+                switch status {
+                case "started":
+                    self?.watchWorkoutActive = true
+                case "stopped":
+                    self?.watchWorkoutActive = false
+                default:
+                    print("Unknown workout status: \(status)")
+                }
+            }
+        }
+        
+        // Handle heart rate updates
         if let heartRate = message["heartRate"] as? Double {
             // For tests, update the value directly without dispatch
             if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
@@ -155,7 +171,43 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
     
-    // MARK: - Public Methods
+    // MARK: - Watch Control Methods
+    
+    /// Starts the workout on the Apple Watch
+    func startWorkout() {
+        guard WCSession.default.isReachable else {
+            lastError = "Apple Watch is not reachable"
+            return
+        }
+        
+        // Send command to watch
+        WCSession.default.sendMessage(["command": "startWorkout"], replyHandler: { response in
+            print("Watch responded to start workout: \(response)")
+        }, errorHandler: { error in
+            DispatchQueue.main.async { [weak self] in
+                self?.lastError = "Failed to start workout: \(error.localizedDescription)"
+            }
+        })
+    }
+    
+    /// Stops the workout on the Apple Watch
+    func stopWorkout() {
+        guard WCSession.default.isReachable else {
+            lastError = "Apple Watch is not reachable"
+            return
+        }
+        
+        // Send command to watch
+        WCSession.default.sendMessage(["command": "stopWorkout"], replyHandler: { response in
+            print("Watch responded to stop workout: \(response)")
+        }, errorHandler: { error in
+            DispatchQueue.main.async { [weak self] in
+                self?.lastError = "Failed to stop workout: \(error.localizedDescription)"
+            }
+        })
+    }
+    
+    // MARK: - OSC Connection Methods
     
     /// Attempts to connect to the specified OSC target
     func connect(to host: String, port: Int) {

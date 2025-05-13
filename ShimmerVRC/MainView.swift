@@ -20,7 +20,8 @@ struct MainView: View {
                 ConnectionStatusBar(
                     watchConnected: connectivityManager.watchConnected,
                     oscConnected: connectivityManager.oscConnected,
-                    connectionState: connectivityManager.connectionState
+                    connectionState: connectivityManager.connectionState,
+                    watchWorkoutActive: connectivityManager.watchWorkoutActive
                 )
                 .padding(.horizontal)
                 
@@ -73,17 +74,29 @@ struct MainView: View {
                         ConnectionView()
                     }
                     
-                    // Start/Stop button (placeholder for watch workout control)
+                    // Start/Stop button for watch workout control
                     Button(action: {
-                        // This will start/stop the workout on the watch
-                        print("Toggle workout state")
+                        if connectivityManager.watchConnected {
+                            if connectivityManager.watchWorkoutActive {
+                                // If workout is active, stop it
+                                connectivityManager.stopWorkout()
+                            } else {
+                                // If workout is not active, start it
+                                connectivityManager.startWorkout()
+                            }
+                        } else {
+                            // Alert user that watch is not connected
+                            // In a real app, you'd show an alert here
+                            print("Watch not connected, cannot control workout")
+                        }
                     }) {
                         VStack {
-                            Image(systemName: connectivityManager.connectionState == .connected ? "stop.circle" : "play.circle")
+                            Image(systemName: connectivityManager.watchWorkoutActive ? "stop.circle" : "play.circle")
                                 .font(.system(size: 24))
-                            Text(connectivityManager.connectionState == .connected ? "Stop" : "Start")
+                            Text(connectivityManager.watchWorkoutActive ? "Stop" : "Start")
                                 .font(.caption)
                         }
+                        .foregroundColor(connectivityManager.watchConnected ? .primary : .secondary)
                     }
                     .accessibilityIdentifier("start_stop_button")
                     
@@ -161,17 +174,24 @@ struct ConnectionStatusBar: View {
     var watchConnected: Bool
     var oscConnected: Bool
     var connectionState: ConnectivityManager.ConnectionState
+    var watchWorkoutActive: Bool = false // Add this parameter with a default value
     
     var body: some View {
         HStack {
-            // Watch connection status
+            // Watch connection status with workout indicator
             HStack(spacing: 5) {
                 Circle()
-                    .fill(watchConnected ? Color.green : Color.red)
+                    .fill(watchConnected ? (watchWorkoutActive ? Color.green : Color.orange) : Color.red)
                     .frame(width: 8, height: 8)
                 Text("Watch")
                     .font(.caption)
                     .foregroundColor(.secondary)
+                
+                if watchConnected && watchWorkoutActive {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 8))
+                        .foregroundColor(.pink)
+                }
             }
             
             Divider()

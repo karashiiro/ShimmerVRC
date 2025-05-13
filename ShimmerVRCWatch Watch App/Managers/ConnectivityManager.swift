@@ -60,6 +60,12 @@ class ConnectivityManager: NSObject, ObservableObject {
     /// Sends heart rate data to the paired iPhone
     /// - Parameter heartRate: The heart rate value in beats per minute
     func sendHeartRate(_ heartRate: Double) {
+        sendMessage(["heartRate": heartRate])
+    }
+    
+    /// Sends a generic message to the paired iPhone
+    /// - Parameter message: The message dictionary to send
+    func sendMessage(_ message: [String: Any]) {
         // Always track attempts for analytics
         sendAttempts += 1
         
@@ -76,8 +82,7 @@ class ConnectivityManager: NSObject, ObservableObject {
         // Update history for debugging
         updateReachabilityHistory(true)
         
-        // Send the heart rate to iPhone
-        let message = ["heartRate": heartRate]
+        // Send the message to iPhone
         session.sendMessage(message, replyHandler: { [weak self] _ in
             // Optional: Handle successful message delivery
             DispatchQueue.main.async {
@@ -87,7 +92,7 @@ class ConnectivityManager: NSObject, ObservableObject {
             }
         }) { [weak self] error in
             DispatchQueue.main.async {
-                self?.lastError = "Error sending heart rate: \(error.localizedDescription)"
+                self?.lastError = "Error sending message: \(error.localizedDescription)"
             }
         }
     }
@@ -162,14 +167,60 @@ extension ConnectivityManager: WCSessionDelegate {
     }
     
     // Required for WCSessionDelegate conformance on watchOS
-    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
-        // Handle any messages from the iPhone app if needed
-        // For example, configuration updates or commands
-        DispatchQueue.main.async {
+    func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
+        // Handle commands from the iPhone
+        DispatchQueue.main.async { [weak self] in
             if let command = message["command"] as? String {
                 print("Received command from iPhone: \(command)")
-                // Handle different commands as needed
+                
+                switch command {
+                case "startWorkout":
+                    // Get the workout manager
+                    let workoutManager = WorkoutManager.shared
+                    
+                    // Start the workout
+                    if !workoutManager.isWorkoutActive {
+                        workoutManager.requestAuthorization() // Ensure we're authorized
+                        workoutManager.startWorkout()
+                        
+                        // Reply with success and status
+                        replyHandler(["status": "success", "action": "started", "isActive": workoutManager.isWorkoutActive])
+                    } else {
+                        // Already running
+                        replyHandler(["status": "success", "action": "none", "message": "Workout already active", "isActive": true])
+                    }
+                    
+                case "stopWorkout":
+                    // Get the workout manager
+                    let workoutManager = WorkoutManager.shared
+                    
+                    // Stop the workout
+                    if workoutManager.isWorkoutActive {
+                        workoutManager.stopWorkout()
+                        
+                        // Reply with success and status
+                        replyHandler(["status": "success", "action": "stopped", "isActive": workoutManager.isWorkoutActive])
+                    } else {
+                        // Already stopped
+                        replyHandler(["status": "success", "action": "none", "message": "No active workout", "isActive": false])
+                    }
+                    
+                default:
+                    // Unknown command
+                    replyHandler(["status": "error", "message": "Unknown command: \(command)"])
+                }
+            } else {
+                // No command specified
+                replyHandler(["status": "error", "message": "No command specified"])
             }
+        }
+    }
+    
+    // Handle messages without reply handlers
+    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+        // Forward to the handler with reply
+        self.session(session, didReceiveMessage: message) { _ in 
+            // No reply needed
         }
     }
 }

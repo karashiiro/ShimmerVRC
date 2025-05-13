@@ -112,6 +112,10 @@ class WorkoutManager: NSObject, ObservableObject {
                     }
                     
                     self.isWorkoutActive = true
+                    
+                    // Notify iPhone that workout started
+                    self.connectivityManager.sendHeartRate(self.currentHeartRate)
+                    self.connectivityManager.sendMessage(["workoutStatus": "started"])
                 }
             }
         } catch {
@@ -134,9 +138,12 @@ class WorkoutManager: NSObject, ObservableObject {
             _ = connector.perform(NSSelectorFromString("notifySessionEnd"))
         }
         
-        // Reset state
+        // Reset state and notify iPhone
         DispatchQueue.main.async {
             self.isWorkoutActive = false
+            
+            // Send status update to iPhone
+            self.connectivityManager.sendMessage(["workoutStatus": "stopped"])
         }
     }
 }
