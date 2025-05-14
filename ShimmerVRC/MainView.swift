@@ -12,111 +12,169 @@ struct MainView: View {
     @StateObject private var connectivityManager = ConnectivityManager.shared
     @State private var showingSettings = false
     @State private var showingConnectionSheet = false
+    @State private var showConnectionSuccess = false
+    @State private var showConnectionError = false
+    
+    // For haptic feedback
+    private let feedbackGenerator = UINotificationFeedbackGenerator()
     
     var body: some View {
         NavigationView {
-            VStack {
-                // Status bar for connections
-                ConnectionStatusBar(
-                    watchConnected: connectivityManager.watchConnected,
-                    oscConnected: connectivityManager.oscConnected,
-                    connectionState: connectivityManager.connectionState,
-                    watchWorkoutActive: connectivityManager.watchWorkoutActive
-                )
-                .padding(.horizontal)
-                
-                // Main heart rate visualization
-                ECGHeartbeatView(bpm: $connectivityManager.bpm)
-                    .padding()
-                
-                // Heart rate display
-                Text(connectivityManager.bpm != nil ? "\(Int(connectivityManager.bpm!)) BPM" : "-- BPM")
-                    .font(.system(size: 48, weight: .bold))
-                    .foregroundColor(connectivityManager.bpm != nil ? .primary : .secondary)
-                    .accessibilityIdentifier("bpm_display")
-                
-                Spacer()
-                
-                // Message statistics (when connected)
-                if connectivityManager.connectionState == .connected {
-                    HStack {
-                        if let lastTime = connectivityManager.lastMessageTime {
-                            Text("Last update: \(timeAgoString(from: lastTime))")
+            ZStack {
+                // Main content
+                VStack(spacing: 0) {
+                    // Status bar for connections
+                    ConnectionStatusBar(
+                        watchConnected: connectivityManager.watchConnected,
+                        oscConnected: connectivityManager.oscConnected,
+                        connectionState: connectivityManager.connectionState,
+                        watchWorkoutActive: connectivityManager.watchWorkoutActive
+                    )
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    .padding(.bottom, 12)
+                    
+                    // Heart rate container with animations
+                    VStack {
+                        // Main heart rate visualization
+                        ECGHeartbeatView(bpm: $connectivityManager.bpm)
+                            .padding(.vertical, 10)
+                        
+                        // Heart rate display with animations
+                        HStack(alignment: .lastTextBaseline) {
+                            Text(connectivityManager.bpm != nil ? "\(Int(connectivityManager.bpm!))" : "--")
+                                .font(.system(size: 64, weight: .bold, design: .rounded))
+                                .foregroundColor(heartRateColor)
+                                .contentTransition(.numericText())
+                                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: connectivityManager.bpm)
+                            
+                            Text("BPM")
+                                .font(.title2)
+                                .foregroundColor(.secondary)
+                                .padding(.leading, -4)
+                        }
+                        .padding(.top, -20)
+                        .padding(.bottom, 16)
+                        .accessibilityIdentifier("bpm_display")
+                    }
+                    .frame(maxHeight: .infinity)
+                    
+                    // Message statistics (when connected)
+                    if connectivityManager.connectionState == .connected {
+                        HStack {
+                            if let lastTime = connectivityManager.lastMessageTime {
+                                Text("Last update: \(timeAgoString(from: lastTime))")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Text("\(connectivityManager.messageCount) messages sent")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
-                        
-                        Spacer()
-                        
-                        Text("\(connectivityManager.messageCount) messages sent")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
-                    .padding(.horizontal)
+                    
+                    Spacer()
+                    
+                    // Bottom action buttons
+                    HStack(spacing: 0) {
+                        // Connect button
+                        ActionButton(
+                            title: "Connect",
+                            icon: "network",
+                            active: connectivityManager.connectionState == .connected,
+                            action: {
+                                showingConnectionSheet = true
+                            }
+                        )
+                        .accessibilityLabel("Connect to VRChat")
+                        .accessibilityIdentifier("connect_button")
+                        .sheet(isPresented: $showingConnectionSheet) {
+                            ConnectionView()
+                        }
+                        
+                        Divider()
+                            .frame(height: 30)
+                        
+                        // Start/Stop button for watch workout control
+                        ActionButton(
+                            title: connectivityManager.watchWorkoutActive ? "Stop" : "Start",
+                            icon: connectivityManager.watchWorkoutActive ? "stop.circle" : "play.circle",
+                            active: connectivityManager.watchWorkoutActive,
+                            enabled: connectivityManager.watchConnected,
+                            action: {
+                                if connectivityManager.watchConnected {
+                                    if connectivityManager.watchWorkoutActive {
+                                        // If workout is active, stop it
+                                        connectivityManager.stopWorkout()
+                                    } else {
+                                        // If workout is not active, start it
+                                        connectivityManager.startWorkout()
+                                    }
+                                    // Provide haptic feedback
+                                    feedbackGenerator.prepare()
+                                    feedbackGenerator.notificationOccurred(.success)
+                                } else {
+                                    // Provide error feedback
+                                    feedbackGenerator.prepare()
+                                    feedbackGenerator.notificationOccurred(.error)
+                                }
+                            }
+                        )
+                        .accessibilityIdentifier("start_stop_button")
+                        
+                        Divider()
+                            .frame(height: 30)
+                        
+                        // Settings button
+                        ActionButton(
+                            title: "Settings",
+                            icon: "gear",
+                            action: {
+                                showingSettings = true
+                            }
+                        )
+                        .accessibilityIdentifier("settings_button")
+                        .sheet(isPresented: $showingSettings) {
+                            SettingsView()
+                        }
+                    }
+                    .padding(.bottom, 8) // Add padding to prevent clipping at bottom of screen
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color(UIColor.secondarySystemBackground))
+                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: -3)
+                    )
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 8)
                 }
                 
-                // Bottom action buttons
-                HStack(spacing: 30) {
-                    // Connect button
-                    Button(action: {
-                        showingConnectionSheet = true
-                    }) {
-                        VStack {
-                            Image(systemName: "network")
-                                .font(.system(size: 24))
-                            Text("Connect")
-                                .font(.caption)
-                        }
-                    }
-                    .accessibilityLabel("Connect to VRChat")
-                    .accessibilityIdentifier("connect_button")
-                    .sheet(isPresented: $showingConnectionSheet) {
-                        ConnectionView()
-                    }
-                    
-                    // Start/Stop button for watch workout control
-                    Button(action: {
-                        if connectivityManager.watchConnected {
-                            if connectivityManager.watchWorkoutActive {
-                                // If workout is active, stop it
-                                connectivityManager.stopWorkout()
-                            } else {
-                                // If workout is not active, start it
-                                connectivityManager.startWorkout()
-                            }
-                        } else {
-                            // Alert user that watch is not connected
-                            // In a real app, you'd show an alert here
-                            print("Watch not connected, cannot control workout")
-                        }
-                    }) {
-                        VStack {
-                            Image(systemName: connectivityManager.watchWorkoutActive ? "stop.circle" : "play.circle")
-                                .font(.system(size: 24))
-                            Text(connectivityManager.watchWorkoutActive ? "Stop" : "Start")
-                                .font(.caption)
-                        }
-                        .foregroundColor(connectivityManager.watchConnected ? .primary : .secondary)
-                    }
-                    .accessibilityIdentifier("start_stop_button")
-                    
-                    // Settings button
-                    Button(action: {
-                        showingSettings = true
-                    }) {
-                        VStack {
-                            Image(systemName: "gear")
-                                .font(.system(size: 24))
-                            Text("Settings")
-                                .font(.caption)
-                        }
-                    }
-                    .accessibilityIdentifier("settings_button")
-                    .sheet(isPresented: $showingSettings) {
-                        SettingsView()
-                    }
+                // Connection success overlay
+                if showConnectionSuccess {
+                    StatusOverlay(
+                        icon: "checkmark.circle.fill",
+                        color: .green,
+                        message: "Connected successfully"
+                    )
+                    .transition(.scale.combined(with: .opacity))
+                    .zIndex(100)
                 }
-                .padding(.bottom, 20)
+                
+                // Connection error overlay
+                if showConnectionError {
+                    StatusOverlay(
+                        icon: "exclamationmark.triangle.fill",
+                        color: .red,
+                        message: connectivityManager.lastError ?? "Connection failed"
+                    )
+                    .transition(.scale.combined(with: .opacity))
+                    .zIndex(100)
+                }
             }
             .navigationTitle("Heart Rate")
             .navigationBarTitleDisplayMode(.inline)
@@ -129,6 +187,79 @@ struct MainView: View {
                         Image(systemName: "waveform.path.ecg")
                     }
                     .accessibilityIdentifier("test_mode_button")
+                }
+            }
+            .onAppear {
+                // Initialize the feedback generator
+                feedbackGenerator.prepare()
+                
+                // Set up notification observers
+                setupNotificationObservers()
+            }
+            .onDisappear {
+                // Clean up notification observers
+                NotificationCenter.default.removeObserver(self)
+            }
+        }
+    }
+    
+    private var heartRateColor: Color {
+        guard let bpm = connectivityManager.bpm else {
+            return .secondary
+        }
+        
+        if bpm < 60 {
+            return .blue
+        } else if bpm < 100 {
+            return .green
+        } else if bpm < 140 {
+            return .orange
+        } else {
+            return .red
+        }
+    }
+    
+    private func setupNotificationObservers() {
+        // Observe connection success
+        NotificationCenter.default.addObserver(
+            forName: .heartRateConnected,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Show success overlay
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                self.showConnectionSuccess = true
+            }
+            
+            // Provide success haptic feedback
+            self.feedbackGenerator.notificationOccurred(.success)
+            
+            // Hide after delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                withAnimation {
+                    self.showConnectionSuccess = false
+                }
+            }
+        }
+        
+        // Observe connection errors
+        NotificationCenter.default.addObserver(
+            forName: .heartRateConnectionError,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Show error overlay
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                self.showConnectionError = true
+            }
+            
+            // Provide error haptic feedback
+            self.feedbackGenerator.notificationOccurred(.error)
+            
+            // Hide after delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                withAnimation {
+                    self.showConnectionError = false
                 }
             }
         }
@@ -182,165 +313,89 @@ struct MainView: View {
     }
 }
 
-// Connection status bar component
-struct ConnectionStatusBar: View {
-    var watchConnected: Bool
-    var oscConnected: Bool
-    var connectionState: ConnectivityManager.ConnectionState
-    var watchWorkoutActive: Bool = false // Add this parameter with a default value
-    @State private var isReconnecting = false
-    @State private var reconnectAttempt = 0
-    @State private var maxReconnectAttempts = 5
-    @State private var errorMessage: String? = nil
+// MARK: - Supporting Components
+
+// Action button component
+struct ActionButton: View {
+    var title: String
+    var icon: String
+    var active: Bool = false
+    var enabled: Bool = true
+    var action: () -> Void
     
     var body: some View {
-        VStack(spacing: 4) {
-            HStack {
-                // Watch connection status with workout indicator
-                HStack(spacing: 5) {
-                    Circle()
-                        .fill(watchConnected ? (watchWorkoutActive ? Color.green : Color.orange) : Color.red)
-                        .frame(width: 8, height: 8)
-                    Text("Watch")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    if watchConnected && watchWorkoutActive {
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 8))
-                            .foregroundColor(.pink)
-                    }
-                }
+        Button(action: action) {
+            VStack {
+                Image(systemName: icon)
+                    .font(.system(size: 24))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(
+                        active ? Color.accentColor :
+                            (enabled ? Color.primary : Color.secondary)
+                    )
                 
-                Divider()
-                    .frame(height: 15)
-                    .padding(.horizontal, 8)
-                
-                // OSC connection status
-                HStack(spacing: 5) {
-                    Circle()
-                        .fill(oscConnected ? Color.green : Color.red)
-                        .frame(width: 8, height: 8)
-                    Text("VRChat")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                // Connection state text with reconnection info
-                HStack(spacing: 4) {
-                    Text(connectionStateText)
-                        .font(.caption)
-                        .foregroundColor(connectionStateColor)
-                    
-                    if isReconnecting {
-                        Text("(\(reconnectAttempt)/\(maxReconnectAttempts))")
-                            .font(.caption2)
-                            .foregroundColor(.orange)
-                            .accessibilityIdentifier("reconnect_indicator")
-                    }
-                }
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(
+                        active ? Color.accentColor :
+                            (enabled ? Color.primary : Color.secondary)
+                    )
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(!enabled)
+    }
+}
+
+// Status overlay component
+struct StatusOverlay: View {
+    var icon: String
+    var color: Color
+    var message: String
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 40))
+                .foregroundColor(color)
             
-            // Error message (shown only when there's an error)
-            if let error = errorMessage, connectionState == .error {
-                Text(error)
-                    .font(.caption2)
-                    .foregroundColor(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .transition(.opacity)
-                    .lineLimit(2)
-                    .accessibilityIdentifier("error_message")
-            }
+            Text(message)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.primary)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(10)
-        .animation(.easeInOut(duration: 0.3), value: errorMessage)
-        .animation(.easeInOut(duration: 0.3), value: isReconnecting)
-        .onAppear {
-            setupNotificationObservers()
-        }
-        .onDisappear {
-            NotificationCenter.default.removeObserver(self)
-        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(UIColor.systemBackground))
+                .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+        )
     }
-    
-    // Helper computed properties
-    var connectionStateText: String {
-        switch connectionState {
-        case .disconnected:
-            return "Not Connected"
-        case .connecting:
-            return isReconnecting ? "Reconnecting..." : "Connecting..."
-        case .connected:
-            return "Connected"
-        case .error:
-            return "Error"
-        }
+}
+
+// Extension to apply rounded corners to specific corners
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
     }
+}
+
+// Shape to create selective rounded corners
+struct RoundedCorner: Shape {
+    var radius: CGFloat
+    var corners: UIRectCorner
     
-    var connectionStateColor: Color {
-        switch connectionState {
-        case .disconnected:
-            return .gray
-        case .connecting:
-            return .orange
-        case .connected:
-            return .green
-        case .error:
-            return .red
-        }
-    }
-    
-    // Set up notification observers for connection events
-    private func setupNotificationObservers() {
-        // Observe reconnection attempts
-        NotificationCenter.default.addObserver(
-            forName: .heartRateReconnecting,
-            object: nil,
-            queue: .main
-        ) { notification in
-            if let attempt = notification.userInfo?["attempt"] as? Int,
-               let maxAttempts = notification.userInfo?["maxAttempts"] as? Int {
-                self.isReconnecting = true
-                self.reconnectAttempt = attempt
-                self.maxReconnectAttempts = maxAttempts
-            }
-        }
-        
-        // Observe connection success
-        NotificationCenter.default.addObserver(
-            forName: .heartRateConnected,
-            object: nil,
-            queue: .main
-        ) { _ in
-            self.isReconnecting = false
-            self.errorMessage = nil
-        }
-        
-        // Observe disconnection
-        NotificationCenter.default.addObserver(
-            forName: .heartRateDisconnected,
-            object: nil,
-            queue: .main
-        ) { _ in
-            self.isReconnecting = false
-            self.errorMessage = nil
-        }
-        
-        // Observe connection errors
-        NotificationCenter.default.addObserver(
-            forName: .heartRateConnectionError,
-            object: nil,
-            queue: .main
-        ) { notification in
-            if let error = notification.userInfo?["error"] as? String {
-                self.errorMessage = error
-            }
-        }
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: corners,
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+        return Path(path.cgPath)
     }
 }
 

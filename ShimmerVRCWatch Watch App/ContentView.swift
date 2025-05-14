@@ -12,69 +12,71 @@ struct ContentView: View {
     @EnvironmentObject private var connectivityManager: ConnectivityManager
     
     var body: some View {
-        VStack(spacing: 16) {
-            // Display heart rate
-            Text("\(Int(workoutManager.currentHeartRate))")
-                .font(.system(size: 48))
-                .fontWeight(.bold)
-                .foregroundColor(heartRateColor)
-                .accessibilityLabel("Heart rate")
-                .accessibilityValue("\(Int(workoutManager.currentHeartRate)) beats per minute")
-            
-            Text("BPM")
-                .font(.caption)
-                .foregroundColor(.gray)
-            
-            // Status indicators
+        ScrollView {
             VStack(spacing: 8) {
-                // Authorization status
-                HStack {
-                    Circle()
-                        .fill(workoutManager.isAuthorized ? Color.green : Color.orange)
-                        .frame(width: 8, height: 8)
-                    Text(workoutManager.isAuthorized ? "Authorized" : "Not Authorized")
-                        .font(.caption2)
+                // Display heart rate
+                Text("\(Int(workoutManager.currentHeartRate))")
+                    .font(.system(size: 48))
+                    .fontWeight(.bold)
+                    .foregroundColor(heartRateColor)
+                    .accessibilityLabel("Heart rate")
+                    .accessibilityValue("\(Int(workoutManager.currentHeartRate)) beats per minute")
+                
+                Text("BPM")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                
+                // Status indicators
+                VStack(spacing: 2) {
+                    // Authorization status
+                    HStack {
+                        Circle()
+                            .fill(workoutManager.isAuthorized ? Color.green : Color.orange)
+                            .frame(width: 8, height: 8)
+                        Text(workoutManager.isAuthorized ? "Authorized" : "Not Authorized")
+                            .font(.caption2)
+                    }
+                    
+                    // Connection status
+                    HStack {
+                        Circle()
+                            .fill(connectivityManager.isConnected ? Color.green : Color.red)
+                            .frame(width: 8, height: 8)
+                        Text(connectivityManager.isConnected ? "Connected" : "Not Connected")
+                            .font(.caption2)
+                    }
                 }
                 
-                // Connection status
-                HStack {
-                    Circle()
-                        .fill(connectivityManager.isConnected ? Color.green : Color.red)
-                        .frame(width: 8, height: 8)
-                    Text(connectivityManager.isConnected ? "Connected" : "Not Connected")
+                // Start/Stop button
+                Button(action: {
+                    if workoutManager.isWorkoutActive {
+                        workoutManager.stopWorkout()
+                    } else {
+                        workoutManager.startWorkout()
+                    }
+                }) {
+                    Text(workoutManager.isWorkoutActive ? "Stop Workout" : "Start Workout")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(workoutManager.isWorkoutActive ? .red : .green)
+                .disabled(!workoutManager.isAuthorized)
+                
+                // Error display (if any)
+                if let error = workoutManager.lastError ?? connectivityManager.lastError {
+                    Text(error)
                         .font(.caption2)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 8)
                 }
             }
-            
-            // Start/Stop button
-            Button(action: {
-                if workoutManager.isWorkoutActive {
-                    workoutManager.stopWorkout()
-                } else {
-                    workoutManager.startWorkout()
-                }
-            }) {
-                Text(workoutManager.isWorkoutActive ? "Stop Workout" : "Start Workout")
-                    .frame(maxWidth: .infinity)
+            .padding()
+            .onAppear {
+                // Request authorization when view appears
+                workoutManager.requestAuthorization()
             }
-            .buttonStyle(.bordered)
-            .tint(workoutManager.isWorkoutActive ? .red : .green)
-            .disabled(!workoutManager.isAuthorized)
-            
-            // Error display (if any)
-            if let error = workoutManager.lastError ?? connectivityManager.lastError {
-                Text(error)
-                    .font(.caption2)
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 8)
-            }
-        }
-        .padding()
-        .onAppear {
-            // Request authorization when view appears
-            workoutManager.requestAuthorization()
         }
     }
     

@@ -54,7 +54,6 @@ struct ConnectionView: View {
                 }
                 
                 Section(header: Text("Connection Settings").accessibility(identifier: "connection_settings_header")) {
-                    HStack {}
                     TextField("Host", text: $host)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
