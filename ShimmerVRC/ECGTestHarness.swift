@@ -31,13 +31,22 @@ struct ECGTestHarness: View {
                             .frame(width: 100)
                             .accessibilityIdentifier("test_bpm_input")
                         
+                        // Clear button for UI tests
+                        Button("Clear") {
+                            bpmInput = ""
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("clear_bpm_button")
+                        
                         Button("Set BPM") {
                             if let bpm = Double(bpmInput) {
                                 if bpm > 300 {
                                     testBPM = 300
+                                    bpmInput = "300" // Update input field
                                 }
                                 else if bpm < 0 {
                                     testBPM = 0
+                                    bpmInput = "0" // Update input field
                                 }
                                 else {
                                     testBPM = bpm

@@ -24,7 +24,7 @@ struct HeartBeatView: View {
             .onAppear {
                 startHeartbeat()
             }
-            .onChange(of: bpm) { _ in
+            .onChange(of: bpm) {
                 restartHeartbeat()
             }
             .onDisappear {
