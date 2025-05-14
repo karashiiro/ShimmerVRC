@@ -154,10 +154,15 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     
     /// Activates the WatchConnectivity session if supported
     private func activateWCSession() {
+        print("📱 Setting up WatchConnectivity")
         if WCSession.isSupported() {
             let session = WCSession.default
+            // Set delegate BEFORE activation
             session.delegate = self
+            print("📱 Activating WCSession")
             session.activate()
+        } else {
+            print("📱 WatchConnectivity is not supported on this device")
         }
     }
     
@@ -165,12 +170,30 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     
     /// Called when the session activation state changes
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        let stateString: String
+        switch activationState {
+        case .activated: stateString = "activated"
+        case .inactive: stateString = "inactive"
+        case .notActivated: stateString = "notActivated"
+        @unknown default: stateString = "unknown(\(activationState.rawValue))"
+        }
+        
+        print("📱 WCSession activation completed - state: \(stateString), isReachable: \(session.isReachable)")
+        
+        if let error = error {
+            print("📱 Activation error: \(error.localizedDescription)")
+            if let nsError = error as NSError? {
+                print("📱 Error details - code: \(nsError.code), domain: \(nsError.domain)")
+                print("📱 Error userInfo: \(nsError.userInfo)")
+            }
+        }
+        
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
             switch activationState {
             case .activated:
-                print("WCSession activated successfully")
+                print("📱 WCSession activated successfully")
                 let wasConnected = self.watchConnected
                 self.watchConnected = session.isReachable
                 
@@ -180,12 +203,12 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
                     self.watchWorkoutActive = false
                 }
             case .inactive, .notActivated:
-                print("WCSession not activated: \(error?.localizedDescription ?? "Unknown error")")
+                print("📱 WCSession not activated: \(error?.localizedDescription ?? "Unknown error")")
                 self.watchConnected = false
                 self.bpm = nil
                 self.watchWorkoutActive = false
             @unknown default:
-                print("WCSession unknown state")
+                print("📱 WCSession unknown state")
                 self.watchConnected = false
                 self.bpm = nil
                 self.watchWorkoutActive = false
@@ -195,11 +218,18 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     
     /// Called when the reachability of the counterpart app changes
     func sessionReachabilityDidChange(_ session: WCSession) {
+        print("📱 WCSession reachability changed to: \(session.isReachable)")
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
             let wasConnected = self.watchConnected
             self.watchConnected = session.isReachable
+            
+            if session.isReachable {
+                print("📱 Watch is now reachable")
+            } else {
+                print("📱 Watch is now unreachable")
+            }
             
             // If watch became unreachable, reset heart rate data
             if wasConnected && !self.watchConnected {
@@ -211,6 +241,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     
     /// Called when a message is received from the counterpart app
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+        print("📱 Received message from watch: \(message)")
         processWatchMessage(message)
         
         // If we're in the background, refresh the background task to extend lifetime
@@ -223,6 +254,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     func processWatchMessage(_ message: [String : Any]) {
         // Handle workout status updates
         if let status = message["workoutStatus"] as? String {
+            print("📱 Received workout status: \(status)")
             DispatchQueue.main.async { [weak self] in
                 switch status {
                 case "started":
@@ -235,32 +267,40 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             }
         }
         
-        // Handle heart rate updates
+        // Handle heart rate updates - check both normal format and simplified format
         if let heartRate = message["heartRate"] as? Double {
-            // For tests, update the value directly without dispatch
-            if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            processHeartRate(heartRate)
+        } else if let heartRate = message["hr"] as? Int {
+            // Process simplified format
+            print("📱 Received simplified heart rate: \(heartRate) BPM")
+            processHeartRate(Double(heartRate))
+        }
+    }
+    
+    private func processHeartRate(_ heartRate: Double) {
+        // For tests, update the value directly without dispatch
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            self.bpm = heartRate
+            self.messageCount += 1
+            self.lastMessageTime = Date()
+            print("Test mode: Processed heart rate: \(heartRate) BPM")
+            
+            // Forward to OSC if connected (test mode)
+            if self.oscConnected {
+                try? self.oscClient.sendHeartRate(heartRate, to: targetHost, port: UInt16(targetPort))
+            }
+        } else {
+            // Normal app operation - use async dispatch
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
                 self.bpm = heartRate
                 self.messageCount += 1
                 self.lastMessageTime = Date()
-                print("Test mode: Processed heart rate: \(heartRate) BPM")
+                print("📱 Processing heart rate: \(heartRate) BPM")
                 
-                // Forward to OSC if connected (test mode)
-                if self.oscConnected {
-                    try? self.oscClient.sendHeartRate(heartRate, to: targetHost, port: UInt16(targetPort))
-                }
-            } else {
-                // Normal app operation - use async dispatch
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
-                    self.bpm = heartRate
-                    self.messageCount += 1
-                    self.lastMessageTime = Date()
-                    print("Received heart rate from Watch: \(heartRate) BPM")
-                    
-                    // Forward to OSC if connected
-                    if self.oscConnected && self.connectionState == .connected {
-                        self.forwardHeartRateToOSC(heartRate)
-                    }
+                // Forward to OSC if connected
+                if self.oscConnected && self.connectionState == .connected {
+                    self.forwardHeartRateToOSC(heartRate)
                 }
             }
         }
@@ -268,6 +308,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     
     /// Required for iOS - Called when the session becomes inactive
     func sessionDidBecomeInactive(_ session: WCSession) {
+        print("📱 WCSession became inactive. Reachable: \(session.isReachable)")
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.watchConnected = false
@@ -278,7 +319,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     
     /// Required for iOS - Called when the session is deactivated
     func sessionDidDeactivate(_ session: WCSession) {
-        // Reactivate for next connection
+        print("📱 WCSession was deactivated - will reactivate")
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.watchConnected = false
@@ -286,6 +327,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             self.watchWorkoutActive = false
             
             // Reactivate the session (required for iOS when switching to a new watch)
+            print("📱 Reactivating WCSession")
             WCSession.default.activate()
         }
     }
@@ -295,15 +337,24 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     /// Starts the workout on the Apple Watch
     func startWorkout() {
         guard WCSession.default.isReachable else {
+            print("📱 Cannot start workout: Watch is not reachable")
             currentError = .watchUnreachable
             lastError = currentError?.localizedDescription
             return
         }
         
-        // Send command to watch
+        print("📱 Sending startWorkout command to watch")
+        
+        // Send simple command to watch - avoid complex objects
         WCSession.default.sendMessage(["command": "startWorkout"], replyHandler: { response in
-            print("Watch responded to start workout: \(response)")
+            print("📱 Watch responded to start workout: \(response)")
         }, errorHandler: { error in
+            print("📱 ERROR starting workout: \(error.localizedDescription)")
+            if let nsError = error as NSError? {
+                print("📱 Error details - code: \(nsError.code), domain: \(nsError.domain)")
+                print("📱 Error userInfo: \(nsError.userInfo)")
+            }
+            
             DispatchQueue.main.async { [weak self] in
                 self?.currentError = .oscSendFailure(message: error.localizedDescription) 
                 self?.lastError = "Failed to start workout: \(error.localizedDescription)"
@@ -314,15 +365,24 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     /// Stops the workout on the Apple Watch
     func stopWorkout() {
         guard WCSession.default.isReachable else {
+            print("📱 Cannot stop workout: Watch is not reachable")
             currentError = .watchUnreachable
             lastError = currentError?.localizedDescription
             return
         }
         
-        // Send command to watch
+        print("📱 Sending stopWorkout command to watch")
+        
+        // Send simple command to watch
         WCSession.default.sendMessage(["command": "stopWorkout"], replyHandler: { response in
-            print("Watch responded to stop workout: \(response)")
+            print("📱 Watch responded to stop workout: \(response)")
         }, errorHandler: { error in
+            print("📱 ERROR stopping workout: \(error.localizedDescription)")
+            if let nsError = error as NSError? {
+                print("📱 Error details - code: \(nsError.code), domain: \(nsError.domain)")
+                print("📱 Error userInfo: \(nsError.userInfo)")
+            }
+            
             DispatchQueue.main.async { [weak self] in
                 self?.currentError = .oscSendFailure(message: error.localizedDescription) 
                 self?.lastError = "Failed to stop workout: \(error.localizedDescription)"

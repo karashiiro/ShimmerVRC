@@ -114,7 +114,6 @@ class WorkoutManager: NSObject, ObservableObject {
                     self.isWorkoutActive = true
                     
                     // Notify iPhone that workout started
-                    self.connectivityManager.sendHeartRate(self.currentHeartRate)
                     self.connectivityManager.sendMessage(["workoutStatus": "started"])
                 }
             }
@@ -195,6 +194,7 @@ extension WorkoutManager: HKLiveWorkoutBuilderDelegate {
               collectedTypes.contains(hrType),
               let statistics = builder.statistics(for: hrType),
               let heartRateSample = statistics.mostRecentQuantity() else {
+            print("⌚️ No heart rate sample available in collected data")
             return
         }
         
@@ -202,11 +202,14 @@ extension WorkoutManager: HKLiveWorkoutBuilderDelegate {
         let heartRateUnit = HKUnit.count().unitDivided(by: .minute())
         let bpm = heartRateSample.doubleValue(for: heartRateUnit)
         
+        print("⌚️ Collected heart rate: \(bpm) BPM")
+        
         // Update UI and forward to iPhone
         DispatchQueue.main.async {
             self.currentHeartRate = bpm
             
-            // Forward to iPhone
+            // Forward to iPhone with a simpler message format
+            print("⌚️ Forwarding heart rate to iPhone: \(bpm) BPM")
             self.connectivityManager.sendHeartRate(bpm)
         }
     }
