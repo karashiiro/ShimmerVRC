@@ -16,7 +16,14 @@ import Network
 class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     // Singleton instance
     // Background task identifier for keeping app alive
-    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+    internal var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+    private var backgroundTaskRefreshTimer: Timer?
+    // isInBackground is internal for testing
+    internal var isInBackground = false
+    private var lastSentHeartRate: Double = 0
+    private var foregroundThreshold: Double = 1.0  // 1 BPM change in foreground
+    private var backgroundThreshold: Double = 3.0  // 3 BPM change in background
+    private var lastSendTime: Date = Date()
     
     // Timer for periodic connectivity checking
     private var connectionMonitorTimer: Timer?
@@ -205,6 +212,11 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     /// Called when a message is received from the counterpart app
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         processWatchMessage(message)
+        
+        // If we're in the background, refresh the background task to extend lifetime
+        if isInBackground {
+            startBackgroundTask()
+        }
     }
     
     /// Processes a message from the Watch - separate method to allow direct calls in tests
@@ -435,7 +447,7 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         guard oscConnected && connectionState == .connected else { return }
         
         do {
-            try oscClient.sendHeartRate(heartRate, to: targetHost, port: UInt16(targetPort))
+            try forwardWithOptimization(heartRate)
         } catch {
             print("Failed to send heart rate: \(error.localizedDescription)")
             currentError = .oscSendFailure(message: error.localizedDescription)
@@ -454,55 +466,125 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
     
+    /// Forwards heart rate with optimization for background mode
+    /// - Parameter bpm: The heart rate to send
+    /// - Throws: Error if sending fails
+    private func forwardWithOptimization(_ bpm: Double) throws {
+        let now = Date()
+        let threshold = isInBackground ? backgroundThreshold : foregroundThreshold
+        let timeSinceLastSend = now.timeIntervalSince(lastSendTime)
+        
+        // In foreground: Send if value changed significantly or every 1 second minimum
+        // In background: Send if value changed significantly or every 3 seconds minimum
+        let minInterval = isInBackground ? 3.0 : 1.0
+        
+        if abs(bpm - lastSentHeartRate) >= threshold || timeSinceLastSend >= minInterval {
+            try oscClient.sendHeartRate(bpm, to: targetHost, port: UInt16(targetPort))
+            lastSentHeartRate = bpm
+            lastSendTime = now
+        }
+    }
+    
     /// Registers a background task to keep the app running
     private func registerBackgroundTask() {
         endBackgroundTask() // End any existing task first
         
         backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+            print("Background task expiring")
             self?.endBackgroundTask()
         }
+        
+        print("Background task started with ID: \(backgroundTask)")
     }
     
     /// Ends the current background task
-    private func endBackgroundTask() {
+    internal func endBackgroundTask() {
         if backgroundTask != .invalid {
             UIApplication.shared.endBackgroundTask(backgroundTask)
             backgroundTask = .invalid
         }
     }
     
+    /// Setup periodic background task refresh to extend background execution time
+    private func setupBackgroundTaskRefresh() {
+        // Cancel existing timer
+        backgroundTaskRefreshTimer?.invalidate()
+        
+        // Create a timer that periodically refreshes our background task
+        // Run every 2 minutes to refresh the background execution allowance
+        backgroundTaskRefreshTimer = Timer.scheduledTimer(withTimeInterval: 120, repeats: true) { [weak self] _ in
+            print("Refreshing background task")
+            self?.startBackgroundTask()
+        }
+    }
+    
+    /// Start a new background task
+    internal func startBackgroundTask() {
+        // End any existing task
+        endBackgroundTask()
+        
+        // Start a new background task
+        backgroundTask = UIApplication.shared.beginBackgroundTask { [weak self] in
+            // This is the expiration handler
+            print("Background task expiration handler called")
+            self?.endBackgroundTask()
+        }
+        
+        print("Background task started with ID: \(backgroundTask)")
+    }
+    
+    /// Clean up background resources
+    private func cleanupBackgroundResources() {
+        backgroundTaskRefreshTimer?.invalidate()
+        backgroundTaskRefreshTimer = nil
+        endBackgroundTask()
+    }
+    
     /// Starts a timer to periodically check connection health
     private func startConnectionMonitoring() {
         connectionMonitorTimer?.invalidate()
         
-        connectionMonitorTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+        // Create a timer with longer interval in background
+        let interval = isInBackground ? 30.0 : 10.0
+        connectionMonitorTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             guard let self = self, self.connectionState == .connected else { return }
             
-            // Check if we've received a message recently (only if watch is connected)
-            if self.watchConnected, let lastTime = self.lastMessageTime, Date().timeIntervalSince(lastTime) > 30.0 {
+            // Check if we've received a message recently (only if watch is connected and we're in foreground)
+            if !self.isInBackground && self.watchConnected, 
+               let lastTime = self.lastMessageTime, 
+               Date().timeIntervalSince(lastTime) > 30.0 {
                 self.currentError = .watchConnectionLost
                 self.lastError = self.currentError?.localizedDescription
                 // Don't change connection state as OSC might still be valid
             }
             
-            // Send keep-alive ping
-            do {
-                try self.oscClient.sendPing(to: self.targetHost, port: UInt16(self.targetPort))
-            } catch {
-                self.currentError = .oscSendFailure(message: error.localizedDescription)
-                self.lastError = self.currentError?.localizedDescription
-                self.connectionState = .error
-                self.oscConnected = false
-                self.notifyConnectionError()
-                self.connectionMonitorTimer?.invalidate()
-                self.connectionMonitorTimer = nil
-                
-                // Attempt reconnection if network is available
-                if self.isNetworkAvailable && !self.targetHost.isEmpty {
-                    self.scheduleReconnect(host: self.targetHost, port: self.targetPort)
+            // Send keep-alive ping (with reduced frequency in background)
+            if !self.isInBackground || self.needsKeepAlive() {
+                do {
+                    try self.oscClient.sendPing(to: self.targetHost, port: UInt16(self.targetPort))
+                } catch {
+                    self.currentError = .oscSendFailure(message: error.localizedDescription)
+                    self.lastError = self.currentError?.localizedDescription
+                    self.connectionState = .error
+                    self.oscConnected = false
+                    self.notifyConnectionError()
+                    self.connectionMonitorTimer?.invalidate()
+                    self.connectionMonitorTimer = nil
+                    
+                    // Attempt reconnection if network is available
+                    if self.isNetworkAvailable && !self.targetHost.isEmpty {
+                        self.scheduleReconnect(host: self.targetHost, port: self.targetPort)
+                    }
                 }
             }
         }
+    }
+    
+    /// Determines if a keep-alive ping is needed in background mode
+    private func needsKeepAlive() -> Bool {
+        // Only send keep-alive in background if it's been a while
+        guard let lastTime = lastMessageTime else { return true }
+        return Date().timeIntervalSince(lastTime) > 60.0 // 1 minute
     }
     
     /// Schedules a reconnection attempt with exponential backoff
@@ -604,5 +686,34 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             // Default VRChat port
             targetPort = 9000
         }
+    }
+    
+    // MARK: - Background Lifecycle Methods
+    
+    /// Called when the app enters background
+    func applicationDidEnterBackground() {
+        print("App entered background - starting background tasks")
+        isInBackground = true
+        startBackgroundTask()
+        setupBackgroundTaskRefresh()
+        
+        // Restart connection monitoring with longer intervals
+        startConnectionMonitoring()
+    }
+    
+    /// Called when the app will enter foreground
+    func applicationWillEnterForeground() {
+        print("App entering foreground - cleaning up background resources")
+        isInBackground = false
+        cleanupBackgroundResources()
+        
+        // Restart connection monitoring with normal intervals
+        startConnectionMonitoring()
+    }
+    
+    /// Called when the app will terminate
+    func applicationWillTerminate() {
+        print("App terminating - cleaning up resources")
+        cleanupBackgroundResources()
     }
 }

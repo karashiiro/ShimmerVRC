@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct MainView: View {
+    @EnvironmentObject var lifecycleObserver: AppLifecycleObserver
     @StateObject private var connectivityManager = ConnectivityManager.shared
     @State private var showingSettings = false
     @State private var showingConnectionSheet = false
