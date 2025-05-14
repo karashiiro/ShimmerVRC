@@ -14,7 +14,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("Connection")) {
+                Section(header: Text("Connection").accessibility(identifier: "section_connection")) {
                     NavigationLink(destination: ConnectionSettingsView()) {
                         Label("VRChat Connection", systemImage: "network")
                     }
@@ -23,7 +23,7 @@ struct SettingsView: View {
                         .tint(.blue)
                 }
                 
-                Section(header: Text("Watch")) {
+                Section(header: Text("Watch").accessibility(identifier: "section_watch")) {
                     NavigationLink(destination: Text("Workout settings go here")) {
                         Label("Workout Settings", systemImage: "heart.circle")
                     }
@@ -33,7 +33,7 @@ struct SettingsView: View {
                     }
                 }
                 
-                Section(header: Text("App")) {
+                Section(header: Text("App").accessibility(identifier: "section_app")) {
                     NavigationLink(destination: Text("Display settings go here")) {
                         Label("Display", systemImage: "display")
                     }

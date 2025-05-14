@@ -27,19 +27,37 @@ class MainViewUITests: XCTestCase {
     
     func testSettingsNavigation() throws {
         // Tap settings button
-        let settingsButton = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Settings'")).element
+        let settingsButton = app.buttons["settings_button"]
         XCTAssertTrue(settingsButton.waitForExistence(timeout: 2), "Settings button should exist")
         settingsButton.tap()
         
-        // Verify settings view appears
+        // Verify settings view appears with a wait
         let settingsNav = app.navigationBars["Settings"]
-        XCTAssertTrue(settingsNav.waitForExistence(timeout: 2), "Settings navigation bar should appear")
+        XCTAssertTrue(settingsNav.waitForExistence(timeout: 5), "Settings navigation bar should appear")
         
-        // Verify settings sections exist
-        let generalSection = app.staticTexts["General"]
-        let advancedSection = app.staticTexts["Advanced"]
-        XCTAssertTrue(generalSection.exists, "General settings section should exist")
-        XCTAssertTrue(advancedSection.exists, "Advanced settings section should exist")
+        // Wait to ensure the view is fully loaded
+        sleep(1)
+        
+        // DEBUG: Print the entire UI hierarchy to see what's available
+        print("\n\n----------- UI HIERARCHY -----------")
+        print(app.debugDescription)
+        print("------------------------------------\n\n")
+        
+        let connectionSection = app.staticTexts["section_connection"]
+        let watchSection = app.staticTexts["section_watch"]
+        let appSection = app.staticTexts["section_app"]
+        
+        // Allow more time for sections to appear
+        XCTAssertTrue(connectionSection.waitForExistence(timeout: 5), "Connection settings section should exist")
+        XCTAssertTrue(watchSection.waitForExistence(timeout: 5), "Watch settings section should exist")
+        XCTAssertTrue(appSection.waitForExistence(timeout: 5), "App settings section should exist")
+        
+        // As a fallback, check that the settings view has some expected content
+        let hasNavigationLinks = app.buttons["VRChat Connection"].exists && 
+                                app.buttons["Workout Settings"].exists && 
+                                app.buttons["Display"].exists
+        
+        XCTAssertTrue(hasNavigationLinks, "Settings should have expected navigation links")
         
         // Dismiss settings
         let doneButton = app.buttons["Done"]
@@ -52,7 +70,7 @@ class MainViewUITests: XCTestCase {
     
     func testConnectionNavigation() throws {
         // Tap connect button
-        let connectButton = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Connect'")).element
+        let connectButton = app.buttons["connect_button"]
         XCTAssertTrue(connectButton.waitForExistence(timeout: 2), "Connect button should exist")
         connectButton.tap()
         
@@ -71,19 +89,20 @@ class MainViewUITests: XCTestCase {
     
     func testUIElementsExist() throws {
         // Check for main UI elements
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'BPM'")).element.exists,
-                     "BPM display should exist")
+        let bpmDisplay = app.staticTexts["bpm_display"]
+        XCTAssertTrue(bpmDisplay.exists, "BPM display should exist")
         
         // Check status bar elements
         XCTAssertTrue(app.staticTexts["Watch"].exists, "Watch status should exist")
         XCTAssertTrue(app.staticTexts["VRChat"].exists, "VRChat status should exist")
         
         // Check bottom action buttons
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Connect'")).element.exists,
-                     "Connect button should exist")
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Start' OR label CONTAINS 'Stop'")).element.exists,
-                     "Start/Stop button should exist")
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Settings'")).element.exists,
-                     "Settings button should exist")
+        let connectButton = app.buttons["connect_button"]
+        let startStopButton = app.buttons["start_stop_button"]
+        let settingsButton = app.buttons["settings_button"]
+        
+        XCTAssertTrue(connectButton.exists, "Connect button should exist")
+        XCTAssertTrue(startStopButton.exists, "Start/Stop button should exist") 
+        XCTAssertTrue(settingsButton.exists, "Settings button should exist")
     }
 }
