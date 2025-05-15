@@ -74,6 +74,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F31F42FC2DD5B97300E890AD /* Exceptions for "ShimmerVRCWatch Watch App" folder in "ShimmerVRCWatch Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"ShimmerVRCWatch-Watch-App-Info.plist",
+			);
+			target = F3876E752DD1B373009D8464 /* ShimmerVRCWatch Watch App */;
+		};
 		F3876E6D2DD1A1EA009D8464 /* Exceptions for "ShimmerVRC" folder in "ShimmerVRC" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -104,6 +111,9 @@
 		};
 		F3876E772DD1B373009D8464 /* ShimmerVRCWatch Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F31F42FC2DD5B97300E890AD /* Exceptions for "ShimmerVRCWatch Watch App" folder in "ShimmerVRCWatch Watch App" target */,
+			);
 			path = "ShimmerVRCWatch Watch App";
 			sourceTree = "<group>";
 		};
@@ -778,6 +788,7 @@
 				DEVELOPMENT_TEAM = 6R36RAZ3HP;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ShimmerVRCWatch-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = ShimmerVRCWatch;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow sharing workout and heart rate data.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow saving workouts and heart data.";
@@ -810,6 +821,7 @@
 				DEVELOPMENT_TEAM = 6R36RAZ3HP;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ShimmerVRCWatch-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = ShimmerVRCWatch;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow sharing workout and heart rate data.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow saving workouts and heart data.";
