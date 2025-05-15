@@ -8,5 +8,15 @@
 		<string>bluetooth-central</string>
 		<string>audio</string>
 	</array>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_osc._udp</string>
+		<string>_oscjson._tcp</string>
+		<string>_http._tcp</string>
+		<string>_vrcosc._udp</string>
+		<string>_vrcosc._tcp</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app needs to discover and connect to VRChat on your local network to stream heart rate data.</string>
 </dict>
 </plist>

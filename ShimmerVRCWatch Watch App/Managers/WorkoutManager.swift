@@ -45,6 +45,12 @@ class WorkoutManager: NSObject, ObservableObject {
     @Published var currentHeartRate: Double = 0
     @Published var lastError: String?
     
+    // Heart rate throttling properties
+    private var lastSentHeartRate: Double = 0
+    private var lastSentTime: Date?
+    private let heartRateChangeThreshold: Double = 1.0 // Only send if changed by 1 BPM
+    private let minimumSendInterval: TimeInterval = 1.0 // 1 second between updates
+    
     /// Initialize with injectable dependencies for testability.
     init(healthStoreWrapper: HealthStoreWrapper = HealthStoreWrapper(),
          connectivityManager: ConnectivityManager = ConnectivityManager.shared) {
@@ -202,13 +208,29 @@ extension WorkoutManager: HKLiveWorkoutBuilderDelegate {
         let heartRateUnit = HKUnit.count().unitDivided(by: .minute())
         let bpm = heartRateSample.doubleValue(for: heartRateUnit)
         
-        print("⌚️ Collected heart rate: \(bpm) BPM")
-        
-        // Update UI and forward to iPhone
+        // Update UI always
         DispatchQueue.main.async {
             self.currentHeartRate = bpm
-            
-            // Forward to iPhone with a simpler message format
+        }
+        
+        // Apply throttling to reduce battery impact and network traffic
+        let now = Date()
+        let shouldSendDueToTime = lastSentTime == nil || now.timeIntervalSince(lastSentTime!) >= minimumSendInterval
+        let heartRateChangedEnough = abs(bpm - lastSentHeartRate) >= heartRateChangeThreshold
+        
+        guard shouldSendDueToTime && heartRateChangedEnough else {
+            // Skip this update - not significant enough change or too soon
+            return
+        }
+        
+        print("⌚️ Collected heart rate: \(bpm) BPM - sending to iPhone")
+        
+        // Update tracking properties
+        lastSentTime = now
+        lastSentHeartRate = bpm
+        
+        // Forward to iPhone with a simpler message format
+        DispatchQueue.main.async {
             print("⌚️ Forwarding heart rate to iPhone: \(bpm) BPM")
             self.connectivityManager.sendHeartRate(bpm)
         }

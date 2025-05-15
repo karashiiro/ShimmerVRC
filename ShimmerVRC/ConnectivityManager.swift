@@ -11,6 +11,7 @@ import Combine
 import WatchConnectivity
 import OSCKit
 import Network
+import AVFoundation
 
 /// State management for connections
 class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
@@ -18,6 +19,10 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     // Background task identifier for keeping app alive
     internal var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     private var backgroundTaskRefreshTimer: Timer?
+    
+    // Audio session properties for background mode
+    private var silentAudioPlayer: AVAudioPlayer?
+    private var audioSession: AVAudioSession?
     // isInBackground is internal for testing
     internal var isInBackground = false
     private var lastSentHeartRate: Double = 0
@@ -508,6 +513,13 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         
         do {
             try forwardWithOptimization(heartRate)
+            
+            // Successfully sent a message, reset ping tracking properties
+            isPingWaitingForResponse = false
+            pingRetryCount = 0
+            
+            // Successful sending means VRChat is still responsive
+            lastMessageTime = Date()
         } catch {
             print("Failed to send heart rate: \(error.localizedDescription)")
             currentError = .oscSendFailure(message: error.localizedDescription)
@@ -598,11 +610,20 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         backgroundTaskRefreshTimer?.invalidate()
         backgroundTaskRefreshTimer = nil
         endBackgroundTask()
+        stopBackgroundAudio()
     }
+    
+    // Properties for ping-based connection detection
+    private var lastPingTime: Date?
+    private var pingRetryCount = 0
+    private let maxPingRetries = 3
+    private var isPingWaitingForResponse = false
     
     /// Starts a timer to periodically check connection health
     private func startConnectionMonitoring() {
         connectionMonitorTimer?.invalidate()
+        pingRetryCount = 0
+        isPingWaitingForResponse = false
         
         // Create a timer with longer interval in background
         let interval = isInBackground ? 30.0 : 10.0
@@ -618,24 +639,64 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
                 // Don't change connection state as OSC might still be valid
             }
             
-            // Send keep-alive ping (with reduced frequency in background)
-            if !self.isInBackground || self.needsKeepAlive() {
-                do {
-                    try self.oscClient.sendPing(to: self.targetHost, port: UInt16(self.targetPort))
-                } catch {
-                    self.currentError = .oscSendFailure(message: error.localizedDescription)
-                    self.lastError = self.currentError?.localizedDescription
-                    self.connectionState = .error
-                    self.oscConnected = false
-                    self.notifyConnectionError()
-                    self.connectionMonitorTimer?.invalidate()
-                    self.connectionMonitorTimer = nil
+            // Check if we've received a response to our last ping
+            if self.isPingWaitingForResponse {
+                // If we sent a ping but got no response
+                if let lastPing = self.lastPingTime, Date().timeIntervalSince(lastPing) > 5.0 {
+                    self.pingRetryCount += 1
+                    self.isPingWaitingForResponse = false
                     
-                    // Attempt reconnection if network is available
-                    if self.isNetworkAvailable && !self.targetHost.isEmpty {
-                        self.scheduleReconnect(host: self.targetHost, port: self.targetPort)
+                    print("No ping response received. Attempt \(self.pingRetryCount)/\(self.maxPingRetries)")
+                    
+                    if self.pingRetryCount >= self.maxPingRetries {
+                        // VRChat connection appears to be lost after maxPingRetries attempts
+                        print("Connection to VRChat appears to be lost after \(self.maxPingRetries) ping attempts")
+                        self.currentError = .hostUnreachable(host: self.targetHost)
+                        self.lastError = "Connection lost: No response from VRChat after \(self.maxPingRetries) ping attempts"
+                        self.connectionState = .error
+                        self.oscConnected = false
+                        self.notifyConnectionError()
+                        self.connectionMonitorTimer?.invalidate()
+                        self.connectionMonitorTimer = nil
+                        
+                        // Attempt reconnection if network is available
+                        if self.isNetworkAvailable && !self.targetHost.isEmpty {
+                            self.scheduleReconnect(host: self.targetHost, port: self.targetPort)
+                        }
+                        
+                        return
                     }
                 }
+            }
+            
+            // Send keep-alive ping (with reduced frequency in background)
+            if !self.isInBackground || self.needsKeepAlive() {
+                if !self.isPingWaitingForResponse { // Only send a new ping if we're not waiting for a response
+                    self.sendPing()
+                }
+            }
+        }
+    }
+    
+    /// Sends a ping message to check VRChat connection status
+    private func sendPing() {
+        do {
+            try self.oscClient.sendPing(to: self.targetHost, port: UInt16(self.targetPort))
+            self.lastPingTime = Date()
+            self.isPingWaitingForResponse = true
+            print("Ping sent to VRChat (\(self.targetHost):\(self.targetPort))")
+        } catch {
+            self.currentError = .oscSendFailure(message: error.localizedDescription)
+            self.lastError = self.currentError?.localizedDescription
+            self.connectionState = .error
+            self.oscConnected = false
+            self.notifyConnectionError()
+            self.connectionMonitorTimer?.invalidate()
+            self.connectionMonitorTimer = nil
+            
+            // Attempt reconnection if network is available
+            if self.isNetworkAvailable && !self.targetHost.isEmpty {
+                self.scheduleReconnect(host: self.targetHost, port: self.targetPort)
             }
         }
     }
@@ -757,8 +818,59 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         startBackgroundTask()
         setupBackgroundTaskRefresh()
         
+        // Start audio playback to keep the app alive in the background
+        startBackgroundAudio()
+        
         // Restart connection monitoring with longer intervals
         startConnectionMonitoring()
+    }
+    
+    /// Starts playing silent audio to keep the app active in the background
+    private func startBackgroundAudio() {
+        guard silentAudioPlayer == nil else { return }
+        
+        do {
+            // Configure audio session
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try session.setActive(true)
+            
+            // Get URL to silent audio file
+            guard let audioURL = Bundle.main.url(forResource: "silence", withExtension: "wav") else {
+                print("Silent audio file not found in the bundle")
+                return
+            }
+            
+            // Create and configure audio player
+            let player = try AVAudioPlayer(contentsOf: audioURL)
+            player.numberOfLoops = -1 // Loop indefinitely
+            player.volume = 0.01 // Nearly silent
+            player.prepareToPlay()
+            player.play()
+            
+            // Store references
+            self.silentAudioPlayer = player
+            self.audioSession = session
+            
+            print("Background audio started")
+        } catch {
+            print("Failed to set up background audio: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Stops the background audio playback
+    private func stopBackgroundAudio() {
+        silentAudioPlayer?.stop()
+        silentAudioPlayer = nil
+        
+        do {
+            try audioSession?.setActive(false)
+        } catch {
+            print("Error deactivating audio session: \(error.localizedDescription)")
+        }
+        
+        audioSession = nil
+        print("Background audio stopped")
     }
     
     /// Called when the app will enter foreground
@@ -766,6 +878,9 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         print("App entering foreground - cleaning up background resources")
         isInBackground = false
         cleanupBackgroundResources()
+        
+        // Stop background audio when app comes to foreground
+        stopBackgroundAudio()
         
         // Restart connection monitoring with normal intervals
         startConnectionMonitoring()
@@ -775,5 +890,6 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     func applicationWillTerminate() {
         print("App terminating - cleaning up resources")
         cleanupBackgroundResources()
+        stopBackgroundAudio()
     }
 }
