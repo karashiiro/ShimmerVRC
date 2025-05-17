@@ -74,9 +74,10 @@ class OSCClient: OSCClientProtocol {
     func sendHeartRate(_ bpm: Double, to host: String, port: UInt16) throws {
         // Validate BPM range
         let validBpm = max(30, min(bpm, 220)) // Clamp to reasonable physiological range
+        let normalizedBpm = Double(validBpm) / 220; // Normalize to 0.0-1.0 for VRChat
         
         // Create OSC message with VRChat-compatible address pattern
-        let hrMessage = OSCMessage("/avatar/parameters/HeartRate", values: [validBpm])
+        let hrMessage = OSCMessage("/avatar/parameters/HeartRate", values: [normalizedBpm])
         try send(hrMessage, to: host, port: port)
     }
 }
