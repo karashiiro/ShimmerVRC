@@ -15,6 +15,8 @@ struct MainView: View {
     @State private var showConnectionSuccess = false
     @State private var showConnectionError = false
     
+    var showTestButton = false
+    
     // For haptic feedback
     private let feedbackGenerator = UINotificationFeedbackGenerator()
     
@@ -179,14 +181,16 @@ struct MainView: View {
             .navigationTitle("Heart Rate")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        // Toggle test mode (for development)
-                        toggleTestMode()
-                    }) {
-                        Image(systemName: "waveform.path.ecg")
+                if showTestButton {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            // Toggle test mode (for development)
+                            toggleTestMode()
+                        }) {
+                            Image(systemName: "waveform.path.ecg")
+                        }
+                        .accessibilityIdentifier("test_mode_button")
                     }
-                    .accessibilityIdentifier("test_mode_button")
                 }
             }
             .onAppear {
@@ -316,6 +320,6 @@ struct MainView: View {
 // Development preview
 struct MainView_Previews: PreviewProvider {
     static var previews: some View {
-        MainView()
+        MainView(showTestButton: true)
     }
 }

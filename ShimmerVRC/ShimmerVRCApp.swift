@@ -65,7 +65,7 @@ struct ShimmerVRCApp: App {
                     .environmentObject(lifecycleObserver)
             } else if CommandLine.arguments.contains("--ui-testing") {
                 // Special mode for UI testing with more reliable elements
-                MainView()
+                MainView(showTestButton: true)
                     .environmentObject(lifecycleObserver)
                     .onAppear {
                         // Force ConnectivityManager to deterministic behavior for testing
