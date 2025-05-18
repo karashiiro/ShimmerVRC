@@ -646,6 +646,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ShimmerVRC/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Shimmer;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Allow streaming heart rate to VRChat.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -676,6 +677,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ShimmerVRC/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Shimmer;
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Allow streaming heart rate to VRChat.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -779,7 +781,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ShimmerVRCWatch-Watch-App-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = ShimmerVRCWatch;
+				INFOPLIST_KEY_CFBundleDisplayName = Shimmer;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow sharing workout and heart rate data.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow saving workouts and heart data.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -812,7 +814,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ShimmerVRCWatch-Watch-App-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = ShimmerVRCWatch;
+				INFOPLIST_KEY_CFBundleDisplayName = Shimmer;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow sharing workout and heart rate data.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow saving workouts and heart data.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
