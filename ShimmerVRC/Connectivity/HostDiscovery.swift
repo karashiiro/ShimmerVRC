@@ -11,7 +11,16 @@ import Combine
 
 /// Class for discovering hosts on the local network via mDNS
 class HostDiscovery: ObservableObject {
-    @Published var hosts: [String] = []
+    struct Host: Hashable, Comparable {
+        var name: String
+        var hostname: String
+        
+        static func < (lhs: HostDiscovery.Host, rhs: HostDiscovery.Host) -> Bool {
+            return lhs.name < rhs.name
+        }
+    }
+    
+    @Published var hosts: [Host] = []
     @Published var isSearching: Bool = false
     @Published var discoveryError: String? = nil
     
@@ -54,10 +63,10 @@ class HostDiscovery: ObservableObject {
                 
                 print("Found \(results.count) results for \(serviceType)")
                 
-                let newHosts = results.compactMap { result -> String? in
+                let newHosts = results.compactMap { result -> Host? in
                     if case let .service(name, type, domain, _) = result.endpoint {
                         print("Found service: \(name) (\(type).\(domain))")
-                        return name
+                        return Host(name: name, hostname: "\(name).\(domain)")
                     }
                     return nil
                 }

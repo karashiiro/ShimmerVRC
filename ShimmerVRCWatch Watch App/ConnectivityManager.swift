@@ -333,17 +333,19 @@ extension ConnectivityManager: WCSessionDelegate {
     func sessionReachabilityDidChange(_ session: WCSession) {
         print("📱 WCSession reachability changed: isReachable = \(session.isReachable), state = \(session.activationState.description)")
         
-        self.isConnected = session.isReachable
-        self.updateReachabilityHistory(session.isReachable)
-        
-        if session.isReachable {
-            print("📱 iPhone is now reachable")
-            // Clear error when connection established
-            if self.lastError == "iPhone is not reachable" {
-                self.lastError = nil
+        DispatchQueue.main.async {
+            self.isConnected = session.isReachable
+            self.updateReachabilityHistory(session.isReachable)
+            
+            if session.isReachable {
+                print("📱 iPhone is now reachable")
+                // Clear error when connection established
+                if self.lastError == "iPhone is not reachable" {
+                    self.lastError = nil
+                }
+            } else {
+                print("📱 iPhone is now unreachable")
             }
-        } else {
-            print("📱 iPhone is now unreachable")
         }
     }
     

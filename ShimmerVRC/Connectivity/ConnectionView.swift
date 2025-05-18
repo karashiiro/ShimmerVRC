@@ -18,7 +18,8 @@ struct ConnectionView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Discovered Devices").accessibility(identifier: "discovered_devices_header")) {
+                Section(header: Text("Discovered Devices")
+                    .accessibility(identifier: "discovered_devices_header")) {
                     if hostDiscovery.isSearching && hostDiscovery.hosts.isEmpty {
                         HStack {
                             Text("Searching for devices...")
@@ -32,20 +33,7 @@ struct ConnectionView: View {
                             .foregroundColor(.secondary)
                             .accessibility(identifier: "no_devices_text")
                     } else {
-                        ForEach(hostDiscovery.hosts, id: \.self) { h in
-                            HStack {
-                                Text(h)
-                                    .accessibility(identifier: "device_\(h.replacingOccurrences(of: ".", with: "_"))")
-                                // TODO: Fix the data model to use actual hostnames here so this isn't broken
-                                    .onTapGesture { host = h }
-                                Spacer()
-                                if host == h { 
-                                    Image(systemName: "checkmark")
-                                        .accessibility(identifier: "checkmark_\(h.replacingOccurrences(of: ".", with: "_"))")
-                                }
-                            }
-                            .accessibility(identifier: "device_row_\(h.replacingOccurrences(of: ".", with: "_"))")
-                        }
+                        HostList(hosts: hostDiscovery.hosts, selectedHost: $host)
                     }
                     
                     Button(action: { hostDiscovery.startBrowsing() }) {
