@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		F3876E572DD19DC5009D8464 /* OSCKit in Frameworks */ = {isa = PBXBuildFile; productRef = F3876E562DD19DC5009D8464 /* OSCKit */; };
 		F3876E592DD19DC5009D8464 /* OSCKitCore in Frameworks */ = {isa = PBXBuildFile; productRef = F3876E582DD19DC5009D8464 /* OSCKitCore */; };
-		F3876E962DD1B375009D8464 /* ShimmerVRCWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F3876E762DD1B373009D8464 /* ShimmerVRCWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F3876E962DD1B375009D8464 /* Shimmer.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = F3876E762DD1B373009D8464 /* Shimmer.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,7 +57,7 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
-				F3876E962DD1B375009D8464 /* ShimmerVRCWatch Watch App.app in Embed Watch Content */,
+				F3876E962DD1B375009D8464 /* Shimmer.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -65,10 +65,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		F3876E032DD12C7F009D8464 /* ShimmerVRC.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ShimmerVRC.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3876E032DD12C7F009D8464 /* Shimmer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Shimmer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3876E102DD12C81009D8464 /* ShimmerVRCTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShimmerVRCTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3876E1A2DD12C81009D8464 /* ShimmerVRCUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ShimmerVRCUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		F3876E762DD1B373009D8464 /* ShimmerVRCWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ShimmerVRCWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3876E762DD1B373009D8464 /* Shimmer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Shimmer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3876E822DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ShimmerVRCWatch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3876E8C2DD1B375009D8464 /* ShimmerVRCWatch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ShimmerVRCWatch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -183,10 +183,10 @@
 		F3876E042DD12C7F009D8464 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				F3876E032DD12C7F009D8464 /* ShimmerVRC.app */,
+				F3876E032DD12C7F009D8464 /* Shimmer.app */,
 				F3876E102DD12C81009D8464 /* ShimmerVRCTests.xctest */,
 				F3876E1A2DD12C81009D8464 /* ShimmerVRCUITests.xctest */,
-				F3876E762DD1B373009D8464 /* ShimmerVRCWatch Watch App.app */,
+				F3876E762DD1B373009D8464 /* Shimmer.app */,
 				F3876E822DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests.xctest */,
 				F3876E8C2DD1B375009D8464 /* ShimmerVRCWatch Watch AppUITests.xctest */,
 			);
@@ -219,7 +219,7 @@
 				F3876E582DD19DC5009D8464 /* OSCKitCore */,
 			);
 			productName = ShimmerVRC;
-			productReference = F3876E032DD12C7F009D8464 /* ShimmerVRC.app */;
+			productReference = F3876E032DD12C7F009D8464 /* Shimmer.app */;
 			productType = "com.apple.product-type.application";
 		};
 		F3876E0F2DD12C81009D8464 /* ShimmerVRCTests */ = {
@@ -287,7 +287,7 @@
 			packageProductDependencies = (
 			);
 			productName = "ShimmerVRCWatch Watch App";
-			productReference = F3876E762DD1B373009D8464 /* ShimmerVRCWatch Watch App.app */;
+			productReference = F3876E762DD1B373009D8464 /* Shimmer.app */;
 			productType = "com.apple.product-type.application";
 		};
 		F3876E812DD1B375009D8464 /* ShimmerVRCWatch Watch AppTests */ = {
@@ -658,7 +658,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = moe.karashiiro.ShimmerVRC;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Shimmer;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -688,7 +688,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = moe.karashiiro.ShimmerVRC;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Shimmer;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -790,7 +790,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = moe.karashiiro.ShimmerVRC.watchkitapp;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Shimmer;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -823,7 +823,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = moe.karashiiro.ShimmerVRC.watchkitapp;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Shimmer;
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
