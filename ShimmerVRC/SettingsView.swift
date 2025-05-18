@@ -23,23 +23,9 @@ struct SettingsView: View {
                     Toggle("Auto-reconnect", isOn: .constant(true))
                         .tint(.blue)
                 }
-                
-                Section(header: Text("Watch").accessibility(identifier: "section_watch")) {
-                    NavigationLink(destination: Text("Workout settings go here")) {
-                        Label("Workout Settings", systemImage: "heart.circle")
-                    }
-                    
-                    NavigationLink(destination: Text("Data settings go here")) {
-                        Label("Heart Rate Data", systemImage: "waveform.path.ecg")
-                    }
-                }
-                
+
                 Section(header: Text("App").accessibility(identifier: "section_app")) {
-                    NavigationLink(destination: Text("Display settings go here")) {
-                        Label("Display", systemImage: "display")
-                    }
-                    
-                    NavigationLink(destination: Text("About this app")) {
+                    NavigationLink(destination: AboutView()) {
                         Label("About", systemImage: "info.circle")
                     }
                 }
@@ -50,6 +36,16 @@ struct SettingsView: View {
                 dismiss()
             })
         }
+    }
+}
+
+struct AboutView: View {
+    var body: some View {
+        HStack {
+            Text("Shimmer v1.0.0")
+                .font(.headline)
+        }
+        .navigationTitle("About")
     }
 }
 
@@ -69,7 +65,7 @@ struct ConnectionSettingsView: View {
                 HStack {
                     Text("Port")
                     Spacer()
-                    Text("\(connectivityManager.targetPort)")
+                    Text(String(connectivityManager.targetPort))
                         .foregroundColor(.secondary)
                 }
             }

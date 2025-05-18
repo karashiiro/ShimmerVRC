@@ -13,6 +13,10 @@ import OSCKit
 import Network
 import AVFoundation
 
+// Constants for BPM change thresholds; helps us to avoid spamming updates
+private let foregroundThreshold: Double = 1.0  // 1 BPM change in foreground
+private let backgroundThreshold: Double = 3.0  // 3 BPM change in background
+
 /// State management for connections
 class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     // Singleton instance
@@ -26,8 +30,6 @@ class ConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     // isInBackground is internal for testing
     internal var isInBackground = false
     private var lastSentHeartRate: Double = 0
-    private var foregroundThreshold: Double = 1.0  // 1 BPM change in foreground
-    private var backgroundThreshold: Double = 3.0  // 3 BPM change in background
     private var lastSendTime: Date = Date()
     
     // Timer for periodic connectivity checking
