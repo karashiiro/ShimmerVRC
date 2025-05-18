@@ -123,7 +123,6 @@ struct ConnectionView: View {
                         .accessibility(identifier: "done_button")
                     }
                 }
-                .accessibility(identifier: "action_buttons_section")
             }
             .navigationTitle("Connect to VRChat")
             .accessibility(identifier: "connect_form")

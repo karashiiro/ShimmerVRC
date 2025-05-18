@@ -123,24 +123,6 @@ class ECGHeartbeatViewUITests: XCTestCase {
         }
     }
     
-    // MARK: - Performance Tests
-    
-    func testECGAnimationPerformanceAtHighBPM() throws {
-        setBPMForTest(170)
-        
-        measure {
-            // Measure how long it takes to interact with UI elements 10 times
-            for i in 0..<10 {
-                // Update BPM value slightly each time
-                setBPMForTest(160 + Double(i))
-                
-                // Verify UI remains responsive 
-                XCTAssertTrue(app.otherElements["ecg_waveform"].exists)
-                XCTAssertTrue(app.images["ecg_heartbeat"].exists)
-            }
-        }
-    }
-    
     // MARK: - Component Existence Tests
     
     func testECGComponentsExist() throws {

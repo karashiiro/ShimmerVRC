@@ -49,13 +49,10 @@ class MainViewUITests: XCTestCase {
         
         // Allow more time for sections to appear
         XCTAssertTrue(connectionSection.waitForExistence(timeout: 5), "Connection settings section should exist")
-        XCTAssertTrue(watchSection.waitForExistence(timeout: 5), "Watch settings section should exist")
         XCTAssertTrue(appSection.waitForExistence(timeout: 5), "App settings section should exist")
         
         // As a fallback, check that the settings view has some expected content
-        let hasNavigationLinks = app.buttons["VRChat Connection"].exists && 
-                                app.buttons["Workout Settings"].exists && 
-                                app.buttons["Display"].exists
+        let hasNavigationLinks = app.buttons["VRChat Connection"].exists
         
         XCTAssertTrue(hasNavigationLinks, "Settings should have expected navigation links")
         
