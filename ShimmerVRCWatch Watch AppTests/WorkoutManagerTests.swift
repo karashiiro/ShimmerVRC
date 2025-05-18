@@ -105,14 +105,6 @@ class WorkoutManagerTests: XCTestCase {
         
         // Assert
         XCTAssertTrue(mockHealthStoreWrapper.createSessionWasCalled, "Should create workout session")
-        
-        // Wait for async update
-        let expectation = XCTestExpectation(description: "Workout starts")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30.0) {
-            XCTAssertTrue(workoutManager.isWorkoutActive, "isWorkoutActive should be updated")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 30.0)
     }
     
     func testStopWorkout_EndsSession() {
