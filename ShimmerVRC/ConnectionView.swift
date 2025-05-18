@@ -36,6 +36,7 @@ struct ConnectionView: View {
                             HStack {
                                 Text(h)
                                     .accessibility(identifier: "device_\(h.replacingOccurrences(of: ".", with: "_"))")
+                                // TODO: Fix the data model to use actual hostnames here so this isn't broken
                                     .onTapGesture { host = h }
                                 Spacer()
                                 if host == h { 
