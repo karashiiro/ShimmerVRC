@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+// TODO: Add settings here
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var connectivityManager = ConnectivityManager.shared
