@@ -82,7 +82,7 @@ struct ECGTestHarness: View {
                     Text("BPM Input: '\(bpmInput)'")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    Text("Test BPM: \(testBPM)")
+                    Text("Test BPM: \(String(describing: testBPM))")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

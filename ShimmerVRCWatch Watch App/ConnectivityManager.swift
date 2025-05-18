@@ -352,7 +352,7 @@ extension ConnectivityManager: WCSessionDelegate {
     // Required for WCSessionDelegate conformance on watchOS
     func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
         // Handle commands from the iPhone
-        DispatchQueue.main.async { [weak self] in
+        DispatchQueue.main.async {
             if let command = message["command"] as? String {
                 print("Received command from iPhone: \(command)")
                 

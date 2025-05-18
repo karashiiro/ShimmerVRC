@@ -150,9 +150,9 @@ struct ConnectionStatusBar: View {
         .onDisappear {
             NotificationCenter.default.removeObserver(self)
         }
-        .onChange(of: connectionState) { newState in
+        .onChange(of: connectionState) {
             // Show error messages when entering error state
-            if newState == .error {
+            if connectionState == .error {
                 withAnimation {
                     isShowingError = true
                 }
@@ -163,7 +163,7 @@ struct ConnectionStatusBar: View {
             }
             
             // Start/stop connecting animation
-            if newState == .connecting {
+            if connectionState == .connecting {
                 startConnectingAnimation()
             }
         }
