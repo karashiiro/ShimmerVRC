@@ -2,7 +2,9 @@
 
 **Note: This will not be professionally developed or distributed on the App Store. It is only public for reference purposes, and so that others may fork it for themselves if desired (no attribution required).**
 
-(not worth spending $100/year on a developer license and handling user issues for a toy project)
+Demo below (very hard to see the emission blink in this lighting, may or may not re-record):
+
+https://github.com/user-attachments/assets/b7953273-f210-4927-8f61-7084804cbd4e
 
 ## Usage Notes
 
