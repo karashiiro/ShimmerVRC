@@ -1,4 +1,4 @@
-# Shimmer
+# \[Sample Only] Shimmer
 
 **Note: This will not be professionally developed or distributed on the App Store. It is only public for reference purposes, and so that others may fork it for themselves if desired (no attribution required).**
 
